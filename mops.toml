@@ -9,7 +9,6 @@ license = "Apache-2.0"
 [dependencies]
 core = "2.0.0"
 swb = "1.2.0"
-vector = "0.4.1"
 promtracker = "0.5.4"
 
 [dev-dependencies]

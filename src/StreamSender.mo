@@ -2,8 +2,8 @@ import Error "mo:core/Error";
 import Nat "mo:core/Nat";
 import Option "mo:core/Option";
 import Result "mo:core/Result";
+import List "mo:core/List";
 import SWB "mo:swb";
-import Vector "mo:vector";
 import Types "types";
 
 module {
@@ -172,15 +172,15 @@ module {
       let elements = do {
         var end = head;
         let counter = counterCreator();
-        let vec = Vector.new<S>();
+        let vec = List.empty<S>();
         label fill loop {
           let ?item = buffer.getOpt(end) else break fill;
           let ?wrappedItem = counter.accept(item) else break fill;
-          Vector.add(vec, wrappedItem);
+          vec.add(wrappedItem);
           end += 1;
         };
         head := end;
-        Vector.toArray(vec);
+        vec.toArray();
       };
 
       let size = elements.size();
