@@ -1,5 +1,5 @@
 import Stream "../../../src/StreamSender";
-import Principal "mo:base/Principal";
+import Principal "mo:core/Principal";
 
 actor class Main(receiver : Principal) {
   // substitute your item type here

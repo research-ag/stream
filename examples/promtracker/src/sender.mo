@@ -1,9 +1,9 @@
 import Stream "../../../src/StreamSender";
 import Tracker "../../../src/Tracker";
-import Principal "mo:base/Principal";
-import Result "mo:base/Result";
-import Text "mo:base/Text";
-import Time "mo:base/Time";
+import Principal "mo:core/Principal";
+import Result "mo:core/Result";
+import Text "mo:core/Text";
+import Time "mo:core/Time";
 import PT "mo:promtracker";
 import HTTP "http";
 

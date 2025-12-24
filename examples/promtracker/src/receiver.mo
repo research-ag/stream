@@ -1,7 +1,7 @@
 import Stream "../../../src/StreamReceiver";
 import Tracker "../../../src/Tracker";
-import Text "mo:base/Text";
-import Time "mo:base/Time";
+import Text "mo:core/Text";
+import Time "mo:core/Time";
 import PT "mo:promtracker";
 import HTTP "http";
 

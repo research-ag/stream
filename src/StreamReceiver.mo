@@ -1,4 +1,4 @@
-import Nat "mo:base/Nat";
+import Nat "mo:core/Nat";
 import Types "types";
 
 module {
@@ -80,7 +80,7 @@ module {
     /// A #ping message is handled equivalently to a #chunk of length zero.
     public func onChunk(cm : Types.ChunkMessage<T>) : Types.ControlMessage {
       let ret = processChunk(cm);
-      callbacks.onChunk(Types.chunkMessageInfo(cm), ret);
+      callbacks.onChunk |> _(Types.chunkMessageInfo(cm), ret);
       ret;
     };
 

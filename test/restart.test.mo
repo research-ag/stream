@@ -2,11 +2,10 @@ import StreamReceiver "../src/StreamReceiver";
 import StreamSender "../src/StreamSender";
 import { StreamReceiver = Receiver } "../src/StreamReceiver";
 import { StreamSender = Sender } "../src/StreamSender";
-import Buffer "mo:base/Buffer";
-import Debug "mo:base/Debug";
-import Nat "mo:base/Nat";
-import Iter "mo:base/Iter";
-import Array "mo:base/Array";
+import List "mo:core/List";
+import Debug "mo:core/Debug";
+import Nat "mo:core/Nat";
+import VarArray "mo:core/VarArray";
 import Types "../src/types";
 import Base "sender.base";
 
@@ -16,7 +15,7 @@ type Sender<T, S> = StreamSender.StreamSender<T, S>;
 type Receiver<S> = StreamReceiver.StreamReceiver<S>;
 
 func createReceiver() : Receiver<?Text> {
-  let received = Buffer.Buffer<?Text>(0);
+  let received = List.empty<?Text>();
 
   let receiver = Receiver<?Text>(
     func(pos : Nat, item : ?Text) {
@@ -43,11 +42,11 @@ func send() : async () {
 };
 
 let n = 2;
-for (i in Iter.range(0, n)) {
+for (i in Nat.range(0, n + 1)) {
   ignore sender.push("a");
 };
 
-let result = Array.init<async ()>(n, async ());
+let result = VarArray.repeat<async ()>(async (), n);
 
 result[0] := send();
 await async {};

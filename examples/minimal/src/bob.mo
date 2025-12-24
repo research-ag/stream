@@ -1,5 +1,5 @@
 import Stream "../../../src/StreamReceiver";
-import Error "mo:base/Error";
+import Error "mo:core/Error";
 
 actor class Main(sender : Principal) {
   // substitute your item type here

@@ -1,6 +1,6 @@
 import Stream "../../../src/StreamSender";
-import Principal "mo:base/Principal";
-import Result "mo:base/Result";
+import Principal "mo:core/Principal";
+import Result "mo:core/Result";
 
 actor class Sender(receiverId : Principal) {
   type ControlMessage = Stream.ControlMessage;

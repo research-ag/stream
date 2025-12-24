@@ -1,7 +1,7 @@
-import Error "mo:base/Error";
-import Nat "mo:base/Nat";
-import Option "mo:base/Option";
-import Result "mo:base/Result";
+import Error "mo:core/Error";
+import Nat "mo:core/Nat";
+import Option "mo:core/Option";
+import Result "mo:core/Result";
 import SWB "mo:swb";
 import Vector "mo:vector";
 import Types "types";
@@ -191,7 +191,7 @@ module {
       };
 
       if (size == 0 and not shouldPing()) {
-        callbacks.onNoSend();
+        callbacks.onNoSend |> _();
         return;
       };
 
@@ -200,14 +200,14 @@ module {
       updateTime();
       concurrentChunks += 1;
 
-      callbacks.onSend(Types.chunkInfo(chunkPayload));
+      callbacks.onSend |> _(Types.chunkInfo(chunkPayload));
 
       let res = try {
         await* sendFunc((start, chunkPayload));
       } catch (e) {
         // shutdown on permanent system errors
         switch (Error.code(e)) {
-          case (#system_fatal or #destination_invalid or #future _) shutdown := true;
+          case (#system_fatal or #destination_invalid or #future _ or #system_unknown) shutdown := true;
           case (#canister_error or #canister_reject) {};
           case (#system_transient or #call_error _) {};
           // TODO: revisit #canister_reject after an IC protocol bug is fixed.
@@ -219,7 +219,7 @@ module {
           // moc interpreter we can simulate #canister_reject but not
           // #canister_error.
         };
-        callbacks.onError(e);
+        callbacks.onError |> _(e);
         #error;
       };
 
@@ -267,7 +267,7 @@ module {
         case (_) {};
       };
 
-      callbacks.onResponse(res);
+      callbacks.onResponse |> _(res);
     };
 
     /// Restart the sender in case it's stopped after receiving `#stop` from `sendFunc`.
@@ -278,7 +278,7 @@ module {
       } catch (_) #error;
       if (res == #ok) {
         stopped := false;
-        callbacks.onRestart();
+        callbacks.onRestart |> _();
       };
       return res == #ok;
     };

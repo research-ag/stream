@@ -1,11 +1,11 @@
 import Stream "../../../src/StreamReceiver";
-import Buffer "mo:base/Buffer";
+import List "mo:core/List";
 
 actor Receiver {
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
-  let received = Buffer.Buffer<?Text>(0);
+  let received = List.List<?Text>(0);
 
   let receiver = Stream.StreamReceiver<?Text>(
     func(index : Nat, item : ?Text) : Bool {

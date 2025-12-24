@@ -93,7 +93,7 @@ import StreamReceiver "mo:stream/StreamReceiver";
 
 ```
 import Stream "mo:stream/StreamSender";
-import Principal "mo:base/Principal";
+import Principal "mo:core/Principal";
 
 actor class Main(receiver : Principal) {
   // substitute your item type here
@@ -139,7 +139,7 @@ actor class Main(receiver : Principal) {
 
 ```
 import Stream "mo:stream/StreamReceiver";
-import Error "mo:base/Error";
+import Error "mo:core/Error";
 
 actor class Main(sender : Principal) {
   // substitute your item type here
@@ -183,7 +183,7 @@ DFX_MOC_PATH=<path-to-moc> mops test
 
 ## Copyright
 
-MR Research AG, 2023-2025
+MR Research AG, 2023 - 2025
 
 ## Authors
 
