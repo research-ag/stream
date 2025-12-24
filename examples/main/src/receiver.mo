@@ -1,13 +1,13 @@
 import Stream "../../../src/StreamReceiver";
 import List "mo:core/List";
 
-actor Receiver {
+persistent actor Receiver {
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
-  let received = List.List<?Text>(0);
+  transient let received = List.empty<?Text>();
 
-  let receiver = Stream.StreamReceiver<?Text>(
+  transient let receiver = Stream.StreamReceiver<?Text>(
     func(index : Nat, item : ?Text) : Bool {
       received.add(item);
       received.size() == index + 1;
@@ -21,7 +21,7 @@ actor Receiver {
 
   public query func lastReceived() : async ??Text {
     if (received.size() == 0) { null } else {
-      ?received.get(received.size() - 1);
+      ?received.at(received.size() - 1 : Nat);
     };
   };
 };

@@ -1,15 +1,15 @@
 import Stream "../../../src/StreamSender";
 import Principal "mo:core/Principal";
 
-actor class Main(receiver : Principal) {
+persistent actor class Main(receiver : Principal) {
   // substitute your item type here
   type Item = Nat;
 
   // begin boilerplate
   type RecvFunc = shared Stream.ChunkMessage<Item> -> async Stream.ControlMessage;
   type ReceiverAPI = actor { receive : RecvFunc }; // substitute your receiver's endpoint for `receive`
-  let A : ReceiverAPI = actor (Principal.toText(receiver)); // use the init argument `receiver` here
-  let send_ = func(x : Stream.ChunkMessage<Item>) : async* Stream.ControlMessage {
+  transient let A : ReceiverAPI = actor (Principal.toText(receiver)); // use the init argument `receiver` here
+  transient let send_ = func(x : Stream.ChunkMessage<Item>) : async* Stream.ControlMessage {
     await A.receive(x) // ok to wrap custom code around this but not tamper with response or trap
   };
   // end boilerplate
@@ -24,7 +24,7 @@ actor class Main(receiver : Principal) {
       return ?item;
     };
   };
-  let sender = Stream.StreamSender<Item, Item>(send_, counter_);
+  transient let sender = Stream.StreamSender<Item, Item>(send_, counter_);
 
   // example use of sender `push` and `sendChunk`
   public shared func enqueue(n : Nat) : async () {

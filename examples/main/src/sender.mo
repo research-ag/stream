@@ -2,15 +2,15 @@ import Stream "../../../src/StreamSender";
 import Principal "mo:core/Principal";
 import Result "mo:core/Result";
 
-actor class Sender(receiverId : Principal) {
+persistent actor class Sender(receiverId : Principal) {
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
-  let receiver = actor (Principal.toText(receiverId)) : actor {
+  transient let receiver = actor (Principal.toText(receiverId)) : actor {
     receive : (message : ChunkMessage) -> async ControlMessage;
   };
 
-  let MAX_LENGTH = 30;
+  transient let MAX_LENGTH = 30;
 
   class counter() {
     var sum = 0;
@@ -29,7 +29,7 @@ actor class Sender(receiverId : Principal) {
     await receiver.receive(message);
   };
 
-  let sender = Stream.StreamSender<Text, ?Text>(send, counter);
+  transient let sender = Stream.StreamSender<Text, ?Text>(send, counter);
 
   public shared func add(text : Text) : async () {
     Result.assertOk(sender.push(text));

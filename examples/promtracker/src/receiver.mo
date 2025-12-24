@@ -5,20 +5,20 @@ import Time "mo:core/Time";
 import PT "mo:promtracker";
 import HTTP "http";
 
-actor class Receiver() = self {
+persistent actor class Receiver() = self {
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
-  var store : ?Text = null;
+  transient var store : ?Text = null;
   public func lastReceived() : async ?Text { store };
 
-  let receiver = Stream.StreamReceiver<?Text>(
+  transient let receiver = Stream.StreamReceiver<?Text>(
     func(_ : Nat, item : ?Text) : Bool { store := item; true },
     ?(10 ** 15, Time.now),
   );
 
-  let metrics = PT.PromTracker("", 65);
-  let tracker = Tracker.Receiver(metrics, "", false);
+  transient let metrics = PT.PromTracker("", 65);
+  transient let tracker = Tracker.Receiver(metrics, "", false);
   tracker.init(receiver);
 
   public shared func receive(c : ChunkMessage) : async ControlMessage {
