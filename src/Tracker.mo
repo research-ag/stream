@@ -38,7 +38,7 @@ module {
     public let lastRestartPos = metrics.addCounter("stream_receiver_last_restart_pos", labels, stable_);
     public let timeSinceLastChunk = metrics.addGauge("stream_receiver_time_since_last_chunk", labels, #both, [], stable_);
 
-    var pullValues : List.List<{ remove : () -> () }> = List.empty<{ remove : () -> () }>();
+    var pullValues = List.empty<{ remove : () -> () }>();
 
     public func init(receiver : ReceiverInterface) {
       receiver_ := ?receiver;
@@ -131,7 +131,7 @@ module {
     // on error
     public let chunkErrorType = metrics.addGauge("stream_sender_chunk_error_type", labels, #none, [0, 1, 2, 3, 4, 5, 6], stable_);
 
-    var pullValues : List.List<{ remove : () -> () }> = List.empty<{ remove : () -> () }>();
+    var pullValues = List.empty<{ remove : () -> () }>();
 
     public func init(sender : SenderInterface) {
       sender_ := ?sender;
