@@ -15,5 +15,8 @@ promtracker = "0.5.4"
 test = "2.0.0"
 async-test = "0.0.1"
 
+[requirements]
+moc = "1.0.0"
+
 [toolchain]
 moc = "1.0.0"
