@@ -9,11 +9,11 @@ license = "Apache-2.0"
 [dependencies]
 core = "2.0.0"
 swb = "1.2.1"
-promtracker = "0.5.4"
+promtracker = "0.6.1"
 
 [dev-dependencies]
-test = "2.0.0"
-async-test = "0.0.1"
+test = "2.1.1"
+async-test = "0.0.2"
 
 [requirements]
 moc = "1.0.0"
