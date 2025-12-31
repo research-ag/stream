@@ -1,4 +1,4 @@
-import Nat "mo:core/Nat";
+import { min } "mo:core/Nat";
 import Types "types";
 
 module {
@@ -99,7 +99,7 @@ module {
       };
       let #chunk ch = msg else return #ok;
       let n = switch (maxLength) {
-        case (?max) Nat.min(max - length_, ch.size());
+        case (?max) min(max - length_, ch.size());
         case (null) ch.size();
       };
       var i = 0;

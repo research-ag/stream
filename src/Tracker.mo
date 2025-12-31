@@ -1,7 +1,7 @@
 import Array "mo:core/Array";
-import List "mo:core/List";
 import Error "mo:core/Error";
 import Int "mo:core/Int";
+import List "mo:core/List";
 import Prim "mo:prim";
 import PT "mo:promtracker";
 
@@ -144,7 +144,7 @@ module {
       pullValues.add(metrics.addPullValue("stream_sender_sent", labels, sender.sent));
       pullValues.add(metrics.addPullValue("stream_sender_received", labels, sender.received));
       pullValues.add(metrics.addPullValue("stream_sender_length", labels, sender.length));
-      pullValues.add(metrics.addPullValue("stream_sender_last_chunk_sent", labels, func() : Nat { Int.abs(sender.lastChunkSent()) / 10 ** 9 }));
+      pullValues.add(metrics.addPullValue("stream_sender_last_chunk_sent", labels, func() : Nat = Int.abs(sender.lastChunkSent()) / 10 ** 9));
       pullValues.add(metrics.addPullValue("stream_sender_shutdown", labels, func() = if (sender.isShutdown()) 1 else 0));
       pullValues.add(metrics.addPullValue("stream_sender_setting_window_size", labels, sender.windowSize));
     };

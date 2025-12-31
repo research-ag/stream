@@ -1,8 +1,8 @@
 import Error "mo:core/Error";
-import Nat "mo:core/Nat";
-import Option "mo:core/Option";
-import Result "mo:core/Result";
 import List "mo:core/List";
+import { min } "mo:core/Nat";
+import Option "mo:core/Option";
+import { type Result } "mo:core/Result";
 import SWB "mo:swb";
 import Types "types";
 
@@ -116,7 +116,7 @@ module {
     };
 
     /// Add item to the `StreamSender`'s queue. Return number of succesfull `push` call, or error in case of lack of space.
-    public func push(item : Q) : Result.Result<Nat, { #NoSpace; #LimitExceeded }> {
+    public func push(item : Q) : Result<Nat, { #NoSpace; #LimitExceeded }> {
       if (queueFull()) return #err(#NoSpace);
       if (streamLengthExceeded()) return #err(#LimitExceeded);
       return #ok(buffer.add item);
@@ -252,7 +252,7 @@ module {
 
       // apply changes
       buffer.deleteTo(okTo);
-      head := Nat.min(head, retraceTo);
+      head := min(head, retraceTo);
       if (pausingNow) paused := true;
 
       // unpause stream
