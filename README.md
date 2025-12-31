@@ -22,7 +22,7 @@ retries if any inter-canister calls fail and
 managing concurrency (pipelining). 
 
 From the outside the protocol provides ordered, reliable messaging similar to TCP.
-The implementation is simler than TCP.
+The implementation is simpler than TCP.
 For example, the only state maintained by the receiver is the stream position (a single integer).
 The receiver does not buffer later items that have arrived out of order.
 
@@ -41,23 +41,23 @@ For updates, help, questions, feedback and other requests related to this packag
 
 ## Motivation
 
-Reliable, asynchronous communication between canisters is hard to get right because of the many edge cases that can occur if inter-canisters calls fail.
+Reliable, asynchronous communication between canisters is hard to get right because of the many edge cases that can occur if inter-canister calls fail.
 The purpose of this package is to hide that complexity from the developer
 by letting this library handle all of it.
 
 ## Interface
 
-`StreamSender` requires such argements as:
+`StreamSender` requires such arguments as:
 
 * `sendFunc` typically should implement sending chunk to the receiver canister.
 * `counterCreator` is used to create a chunk out of pushed items.
 `accept` function is called sequentially on items which are added to the chunk, until receiving `null`.
 If the item is accepted it should be converted to type `S`.
-Typical implementation of `counter` is to accept items while their total size is less then given maximum chunk size.
+Typical implementation of `counter` is to accept items while their total size is less than the given maximum chunk size.
 * `settings` consists of:
-    * `maxQueueSize` is maximum number of elements, which can simultaneously be in `StreamSender`'s queue. Default value is infinity.
-    * `maxConcurrentChunks` is maximum number of concurrent `sendChunk` calls. Default value is `MAX_CONCURRENT_CHUNKS_DEFAULT`.
-    * `keepAliveSeconds` is period in seconds after which `StreamSender` should send ping chunk in case if there is no items to send. Default value means not to ping.
+    * `maxQueueSize` is the maximum number of elements that can simultaneously be in `StreamSender`'s queue. Default value is infinity.
+    * `maxConcurrentChunks` is the maximum number of concurrent `sendChunk` calls. Default value is `MAX_CONCURRENT_CHUNKS_DEFAULT`.
+    * `keepAliveSeconds` is the period in seconds after which `StreamSender` should send a ping chunk in case there are no items to send. Default value means not to ping.
 
 Methods:
 
@@ -66,11 +66,11 @@ Methods:
 * `sendChunk` to send chunk to the receiver side.
 * additional helper functions are provided.
 
-`StreamReceiver` requires such argements as:
+`StreamReceiver` requires such arguments as:
 
-* `startPos` is starting length.
-* `timeout` is maximum time between onChunk calls. Default time period is infinite.
-* `itemCallback` function to be called on each received item.
+* `startPos` is the starting length.
+* `timeout` is the maximum time between onChunk calls. Default time period is infinite.
+* `itemCallback` is the function to be called on each received item.
 
 Method `onChunk` should be called when receiving chunk from another canister.
 
