@@ -1,6 +1,6 @@
 [package]
 name = "stream"
-version = "0.0.1"
+version = "0.0.2"
 description = "Stream sender and receiver libraries"
 repository = "https://github.com/research-ag/stream"
 keywords = [ "sender", "receiver", "batch", "concurrent", "order" ]
