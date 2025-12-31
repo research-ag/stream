@@ -2,10 +2,10 @@ import StreamReceiver "../src/StreamReceiver";
 import StreamSender "../src/StreamSender";
 import { StreamReceiver = Receiver } "../src/StreamReceiver";
 import { StreamSender = Sender } "../src/StreamSender";
-import Buffer "mo:base/Buffer";
-import Debug "mo:base/Debug";
-import Nat "mo:base/Nat";
-import Result "mo:base/Result";
+import List "mo:core/List";
+import Debug "mo:core/Debug";
+import Nat "mo:core/Nat";
+import Result "mo:core/Result";
 import Types "../src/types";
 
 type ChunkMessage = Types.ChunkMessage<?Text>;
@@ -14,7 +14,7 @@ type Sender<T, S> = StreamSender.StreamSender<T, S>;
 type Receiver<S> = StreamReceiver.StreamReceiver<S>;
 
 func createReceiver() : Receiver<?Text> {
-  let received = Buffer.Buffer<?Text>(0);
+  let received = List.empty<?Text>();
 
   let receiver = Receiver<?Text>(
     func(pos : Nat, item : ?Text) : Bool {

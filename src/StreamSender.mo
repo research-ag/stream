@@ -1,9 +1,9 @@
-import Error "mo:base/Error";
-import Nat "mo:base/Nat";
-import Option "mo:base/Option";
-import Result "mo:base/Result";
+import Error "mo:core/Error";
+import List "mo:core/List";
+import { min } "mo:core/Nat";
+import Option "mo:core/Option";
+import { type Result } "mo:core/Result";
 import SWB "mo:swb";
-import Vector "mo:vector";
 import Types "types";
 
 module {
@@ -116,7 +116,7 @@ module {
     };
 
     /// Add item to the `StreamSender`'s queue. Return number of succesfull `push` call, or error in case of lack of space.
-    public func push(item : Q) : Result.Result<Nat, { #NoSpace; #LimitExceeded }> {
+    public func push(item : Q) : Result<Nat, { #NoSpace; #LimitExceeded }> {
       if (queueFull()) return #err(#NoSpace);
       if (streamLengthExceeded()) return #err(#LimitExceeded);
       return #ok(buffer.add item);
@@ -172,15 +172,15 @@ module {
       let elements = do {
         var end = head;
         let counter = counterCreator();
-        let vec = Vector.new<S>();
+        let vec = List.empty<S>();
         label fill loop {
           let ?item = buffer.getOpt(end) else break fill;
           let ?wrappedItem = counter.accept(item) else break fill;
-          Vector.add(vec, wrappedItem);
+          vec.add(wrappedItem);
           end += 1;
         };
         head := end;
-        Vector.toArray(vec);
+        vec.toArray();
       };
 
       let size = elements.size();
@@ -191,7 +191,7 @@ module {
       };
 
       if (size == 0 and not shouldPing()) {
-        callbacks.onNoSend();
+        callbacks.onNoSend |> _();
         return;
       };
 
@@ -200,14 +200,14 @@ module {
       updateTime();
       concurrentChunks += 1;
 
-      callbacks.onSend(Types.chunkInfo(chunkPayload));
+      callbacks.onSend |> _(Types.chunkInfo(chunkPayload));
 
       let res = try {
         await* sendFunc((start, chunkPayload));
       } catch (e) {
         // shutdown on permanent system errors
         switch (Error.code(e)) {
-          case (#system_fatal or #destination_invalid or #future _) shutdown := true;
+          case (#system_fatal or #destination_invalid or #future _ or #system_unknown) shutdown := true;
           case (#canister_error or #canister_reject) {};
           case (#system_transient or #call_error _) {};
           // TODO: revisit #canister_reject after an IC protocol bug is fixed.
@@ -219,7 +219,7 @@ module {
           // moc interpreter we can simulate #canister_reject but not
           // #canister_error.
         };
-        callbacks.onError(e);
+        callbacks.onError |> _(e);
         #error;
       };
 
@@ -252,7 +252,7 @@ module {
 
       // apply changes
       buffer.deleteTo(okTo);
-      head := Nat.min(head, retraceTo);
+      head := min(head, retraceTo);
       if (pausingNow) paused := true;
 
       // unpause stream
@@ -267,7 +267,7 @@ module {
         case (_) {};
       };
 
-      callbacks.onResponse(res);
+      callbacks.onResponse |> _(res);
     };
 
     /// Restart the sender in case it's stopped after receiving `#stop` from `sendFunc`.
@@ -278,7 +278,7 @@ module {
       } catch (_) #error;
       if (res == #ok) {
         stopped := false;
-        callbacks.onRestart();
+        callbacks.onRestart |> _();
       };
       return res == #ok;
     };

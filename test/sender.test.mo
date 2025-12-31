@@ -1,10 +1,10 @@
 import StreamSender "../src/StreamSender";
 import Types "../src/types";
-import Result "mo:base/Result";
-import Array "mo:base/Array";
-import Char "mo:base/Char";
-import Iter "mo:base/Iter";
-import Nat32 "mo:base/Nat32";
+import Result "mo:core/Result";
+import Array "mo:core/Array";
+import Char "mo:core/Char";
+import Nat "mo:core/Nat";
+import Nat32 "mo:core/Nat32";
 import Base "sender.base";
 
 // sequential successful sends, chunk length = 1
@@ -23,7 +23,7 @@ do {
     Base.create(5),
   );
 
-  for (i in Iter.range(0, N - 1)) {
+  for (i in Nat.range(0, N)) {
     Result.assertOk(sender.push(array[i]));
   };
 
@@ -52,7 +52,7 @@ do {
     Base.create(6),
   );
 
-  for (i in Iter.range(0, N - 1)) {
+  for (i in Nat.range(0, N)) {
     Result.assertOk(sender.push(array[i]));
   };
 

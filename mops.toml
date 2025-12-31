@@ -1,20 +1,22 @@
 [package]
 name = "stream"
-version = "0.0.1"
+version = "0.0.2"
 description = "Stream sender and receiver libraries"
 repository = "https://github.com/research-ag/stream"
 keywords = [ "sender", "receiver", "batch", "concurrent", "order" ]
 license = "Apache-2.0"
 
 [dependencies]
-base = "0.14.4"
-swb = "1.2.0"
-vector = "0.4.1"
-promtracker = "0.5.4"
+core = "2.0.0"
+swb = "1.2.1"
+promtracker = "0.6.1"
 
 [dev-dependencies]
-test = "2.0.0"
-async-test = "0.0.1"
+test = "2.1.1"
+async-test = "0.0.2"
+
+[requirements]
+moc = "1.0.0"
 
 [toolchain]
-moc = "0.13.0"
+moc = "1.0.0"

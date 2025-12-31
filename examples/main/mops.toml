@@ -1,4 +1,6 @@
 [dependencies]
-base = "0.14.4"
+core = "2.0.0"
 swb = "1.2.0"
-vector = "0.4.1"
+
+[toolchain]
+moc = "1.0.0"

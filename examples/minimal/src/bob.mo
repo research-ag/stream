@@ -1,12 +1,12 @@
 import Stream "../../../src/StreamReceiver";
-import Error "mo:base/Error";
+import Error "mo:core/Error";
 
-actor class Main(sender : Principal) {
+persistent actor class Main(sender : Principal) {
   // substitute your item type here
   type Item = Nat;
 
   // define your processing function
-  var log_ : Text = "";
+  transient var log_ : Text = "";
   func processItem(index : Nat, item : Item) : Bool {
     // choose function name, keep the signature
     log_ #= debug_show (index, item) # " "; // put your processing code here
@@ -14,7 +14,7 @@ actor class Main(sender : Principal) {
   };
 
   // begin boilerplate
-  let receiver_ = Stream.StreamReceiver<Item>(processItem, null); // substitute your processing function for `processItem`
+  transient let receiver_ = Stream.StreamReceiver<Item>(processItem, null); // substitute your processing function for `processItem`
   public shared (msg) func receive(m : Stream.ChunkMessage<Item>) : async Stream.ControlMessage {
     // choose a name for public endpoint `receive`
     if (msg.caller != sender) throw Error.reject("not authorized"); // use the init argument `sender` here

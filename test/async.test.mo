@@ -1,11 +1,12 @@
 import AsyncMethodTester "mo:async-test";
-import Array "mo:base/Array";
-import Iter "mo:base/Iter";
-import Result "mo:base/Result";
-import Nat32 "mo:base/Nat32";
-import Debug "mo:base/Debug";
-import Int "mo:base/Int";
-import Nat "mo:base/Nat";
+import Array "mo:core/Array";
+import Iter "mo:core/Iter";
+import Result "mo:core/Result";
+import Nat32 "mo:core/Nat32";
+import Debug "mo:core/Debug";
+import Int "mo:core/Int";
+import Nat "mo:core/Nat";
+import VarArray "mo:core/VarArray";
 import StreamSender "../src/StreamSender";
 import StreamReceiver "../src/StreamReceiver";
 import Base "sender.base";
@@ -28,13 +29,13 @@ func test_call(sequence : [Item]) : async* () {
     Base.create(1),
   );
 
-  for (i in Iter.range(0, n - 1)) {
+  for (i in Nat.range(0, n)) {
     Result.assertOk(sender.push("a"));
   };
 
-  var result = Array.init<async ()>(n, async ());
+  var result = VarArray.repeat<async ()>(async (), n);
 
-  for (i in Iter.range(0, n - 1)) {
+  for (i in Nat.range(0, n)) {
     result[i] := async await* sender.sendChunk();
     await* mock.wait(i, #called);
 
@@ -63,7 +64,7 @@ func test_stage(sequence : [Item]) : async* () {
     Base.create(1),
   );
 
-  for (i in Iter.range(0, n - 1)) {
+  for (i in Nat.range(0, n)) {
     Result.assertOk(sender.push("a"));
   };
 
@@ -74,8 +75,8 @@ func test_stage(sequence : [Item]) : async* () {
     i += 1;
   };
 
-  var result = Array.init<async ()>(n, async ());
-  for (i in Iter.range(0, n - 1)) {
+  var result = VarArray.repeat<async ()>(async (), n);
+  for (i in Nat.range(0, n)) {
     result[i] := async await* sender.sendChunk();
     await* mock.wait(i, #called);
 
@@ -292,9 +293,9 @@ func allCases(n : Nat) : async () {
     s.setKeepAlive(?(1, func() = time));
     s.setWindowSize(n + 1);
 
-    var result = Array.init<async ()>(n, async ());
+    var result = VarArray.repeat<async ()>(async (), n);
 
-    for (i in Iter.range(0, n - 1)) {
+    for (i in Nat.range(0, n)) {
       switch (responses[i].1) {
         case (#chunk) {
           Result.assertOk(s.push("a"));
@@ -307,18 +308,18 @@ func allCases(n : Nat) : async () {
       await* mock.wait(i, #called);
     };
 
-    for (i in Iter.range(0, n - 1)) {
+    for (i in Nat.range(0, n)) {
       mock.release(p[i], responses[p[i]].0);
       await result[p[i]];
     };
     s.status() != #shutdown and len == s.received();
   };
 
-  let p = Array.tabulateVar<Nat>(n, func(i) = i);
+  let p = VarArray.tabulate<Nat>(n, func(i) = i);
   label l loop {
-    for (i in Iter.range(0, 2 ** n - 1)) {
-      for (j in Iter.range(0, 2 ** n - 1)) {
-        for (time in Iter.range(0, n - 1)) {
+    for (i in Nat.range(0, 2 ** n)) {
+      for (j in Nat.range(0, 2 ** n)) {
+        for (time in Nat.range(0, n)) {
           let a = Nat32.fromNat(i);
           let b = Nat32.fromNat(j);
           let (r, l) = getResponses(a, b, time);
@@ -334,7 +335,7 @@ func allCases(n : Nat) : async () {
 };
 
 do {
-  for (i in Iter.range(2, 3)) {
+  for (i in Nat.range(2, 4)) {
     await allCases(i);
   };
 };
@@ -357,11 +358,11 @@ func _test_arbitrary(sequence : [ItemA]) : async () {
     Base.create(1),
   );
 
-  for (i in Iter.range(0, n - 1)) {
+  for (i in Nat.range(0, n)) {
     Result.assertOk(sender.push("a"));
   };
 
-  var result = Array.init<async ()>(n, async ());
+  var result = VarArray.repeat<async ()>(async (), n);
   var i = 0;
   for (item in sequence.vals()) {
     let (command, status, received, sent) = item;
@@ -395,13 +396,13 @@ do {
     Base.create(1),
   );
 
-  for (i in Iter.range(0, N - 1)) {
+  for (i in Nat.range(0, N)) {
     Result.assertOk(sender.push("a"));
   };
 
-  var result = Array.init<async ()>(N, async ());
+  var result = VarArray.repeat<async ()>(async (), N);
 
-  for (i in Iter.range(0, N - 2)) {
+  for (i in Nat.range(0, N - 1)) {
     result[i] := async await* sender.sendChunk();
     await* mock.wait(i, #called);
     assert sender.status() == #ready and sender.received() == 0 and sender.sent() == i + 1;
@@ -411,7 +412,7 @@ do {
   await* mock.wait(N - 1, #called);
   assert sender.status() == #busy and sender.received() == 0 and sender.sent() == N;
 
-  for (i in Iter.range(0, N - 1)) {
+  for (i in Nat.range(0, N)) {
     mock.release(i, ? #ok);
     await result[i];
     assert sender.status() == #ready and sender.received() == i + 1 and sender.sent() == N;
@@ -434,12 +435,12 @@ do {
   var time = 0;
   sender.setKeepAlive(?(1, func() = time));
 
-  var result = Array.init<async ()>(n, async ());
+  var result = VarArray.repeat<async ()>(async (), n);
 
   time := 2;
   result[0] := async await* sender.sendChunk();
   await* mock.wait(0, #called);
-  for (i in Iter.range(1, 3)) {
+  for (i in Nat.range(1, 4)) {
     Result.assertOk(sender.push("a"));
   };
 
@@ -467,12 +468,12 @@ do {
     Base.create(1),
   );
 
-  for (i in Iter.range(1, 2)) {
+  for (i in Nat.range(1, 3)) {
     Result.assertOk(sender.push("a"));
   };
 
   let n = 4;
-  var result = Array.init<async ()>(n, async ());
+  var result = VarArray.repeat<async ()>(async (), n);
 
   result[0] := async await* sender.sendChunk();
   await* mock.wait(0, #called);

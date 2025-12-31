@@ -1,7 +1,7 @@
-import Array "mo:base/Array";
-import Buffer "mo:base/Buffer";
-import Error "mo:base/Error";
-import Int "mo:base/Int";
+import Array "mo:core/Array";
+import Error "mo:core/Error";
+import Int "mo:core/Int";
+import List "mo:core/List";
 import Prim "mo:prim";
 import PT "mo:promtracker";
 
@@ -38,7 +38,7 @@ module {
     public let lastRestartPos = metrics.addCounter("stream_receiver_last_restart_pos", labels, stable_);
     public let timeSinceLastChunk = metrics.addGauge("stream_receiver_time_since_last_chunk", labels, #both, [], stable_);
 
-    var pullValues : Buffer.Buffer<{ remove : () -> () }> = Buffer.Buffer<{ remove : () -> () }>(1);
+    var pullValues = List.empty<{ remove : () -> () }>();
 
     public func init(receiver : ReceiverInterface) {
       receiver_ := ?receiver;
@@ -58,7 +58,7 @@ module {
       lastStopPos.remove();
       lastRestartPos.remove();
       timeSinceLastChunk.remove();
-      for (v in pullValues.vals()) {
+      for (v in pullValues.values()) {
         v.remove();
       };
       pullValues.clear();
@@ -131,7 +131,7 @@ module {
     // on error
     public let chunkErrorType = metrics.addGauge("stream_sender_chunk_error_type", labels, #none, [0, 1, 2, 3, 4, 5, 6], stable_);
 
-    var pullValues : Buffer.Buffer<{ remove : () -> () }> = Buffer.Buffer<{ remove : () -> () }>(6);
+    var pullValues = List.empty<{ remove : () -> () }>();
 
     public func init(sender : SenderInterface) {
       sender_ := ?sender;
@@ -144,7 +144,7 @@ module {
       pullValues.add(metrics.addPullValue("stream_sender_sent", labels, sender.sent));
       pullValues.add(metrics.addPullValue("stream_sender_received", labels, sender.received));
       pullValues.add(metrics.addPullValue("stream_sender_length", labels, sender.length));
-      pullValues.add(metrics.addPullValue("stream_sender_last_chunk_sent", labels, func() : Nat { Int.abs(sender.lastChunkSent()) / 10 ** 9 }));
+      pullValues.add(metrics.addPullValue("stream_sender_last_chunk_sent", labels, func() : Nat = Int.abs(sender.lastChunkSent()) / 10 ** 9));
       pullValues.add(metrics.addPullValue("stream_sender_shutdown", labels, func() = if (sender.isShutdown()) 1 else 0));
       pullValues.add(metrics.addPullValue("stream_sender_setting_window_size", labels, sender.windowSize));
     };
@@ -165,7 +165,7 @@ module {
       lastStopPos.remove();
       lastRestartPos.remove();
       chunkErrorType.remove();
-      for (v in pullValues.vals()) {
+      for (v in pullValues.values()) {
         v.remove();
       };
       pullValues.clear();
@@ -200,6 +200,7 @@ module {
         case (#canister_reject) 4;
         case (#canister_error) 5;
         case (#future _) 7;
+        case (#system_unknown) 8;
       };
       chunkErrorType.update(rejectCode);
     };
