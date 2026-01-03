@@ -12,7 +12,6 @@ swb = "1.2.1"
 promtracker = "0.6.1"
 
 [dev-dependencies]
-test = "2.1.1"
 async-test = "0.0.2"
 
 [requirements]
