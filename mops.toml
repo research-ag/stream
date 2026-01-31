@@ -8,8 +8,8 @@ license = "Apache-2.0"
 
 [dependencies]
 core = "2.0.0"
-swb = "1.2.1"
-promtracker = "0.6.1"
+swb = "1.2.2"
+promtracker = "0.6.3"
 
 [dev-dependencies]
 async-test = "0.0.2"
@@ -18,4 +18,4 @@ async-test = "0.0.2"
 moc = "1.0.0"
 
 [toolchain]
-moc = "1.0.0"
+moc = "1.1.0"
