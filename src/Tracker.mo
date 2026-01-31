@@ -11,41 +11,63 @@ import Types "types";
 
 /// See use example in examples/promtracker.
 module {
+  /// A subtype of the Receiver class.
   public type ReceiverInterface = {
     length : () -> Nat;
     callbacks : StreamReceiver.Callbacks;
   };
 
   /// Receiver tracker.
+  ///
+  /// This class is a convenient helper used to connect one specific Receiver instance
+  /// to one specific PromTracker instance.
+  ///
+  /// The PromTracker instance is passed in to the constructor.
+  /// The constructor code will then add all relevant metrics to the PromTracker. 
+  ///
+  /// The Receiver instance is passed in to the init() method.
+  /// The init() method will then connect all relevant events in the Receiver to update
+  /// the metrics in the PromTracker.
+  ///
+  /// Further constructor arguments are:
+  ///   labels : additional labels given to all metrics that are added to the PromTracker.
+  ///   stable_ : whether PromTracker persists the metrics across canister upgrades or not.
+  ///
+  /// If you want to connect more than one Receiver to the same PromTracker then
+  /// create multiple Receiver tracker instances, one for each Receiver instance.
+  /// Make sure to pass different labels to each Receiver tracker instance because that is
+  /// the only way the single PromTracker instance can distinguish between them.
   public class Receiver(metrics : PT.PromTracker, labels : Text, stable_ : Bool) {
     var receiver_ : ?ReceiverInterface = null;
     var previousTime : Nat = 0;
 
     // gauges
-    public let chunkSize = metrics.addGauge("stream_receiver_chunk_size", labels, #both, Array.tabulate<Nat>(8, func(i) = 8 ** i), stable_);
-    public let stopFlag = metrics.addGauge("stream_receiver_stop_flag", labels, #both, [], stable_);
+    let chunkSize = metrics.addGauge("stream_receiver_chunk_size", labels, #both, Array.tabulate<Nat>(8, func(i) = 8 ** i), stable_);
+    let stopFlag = metrics.addGauge("stream_receiver_stop_flag", labels, #both, [], stable_);
 
     // pulls
-    public let lastChunkReceived = metrics.addPullValue("stream_receiver_last_chunk_received", labels, func() = previousTime);
+    let lastChunkReceived = metrics.addPullValue("stream_receiver_last_chunk_received", labels, func() = previousTime);
 
     // counters
-    public let chunksOk = metrics.addCounter("stream_receiver_total_chunks_ok", labels, stable_);
-    public let pingsOk = metrics.addCounter("stream_receiver_total_pings_ok", labels, stable_);
-    public let gaps = metrics.addCounter("stream_receiver_total_gaps", labels, stable_);
-    public let stops = metrics.addCounter("stream_receiver_total_stops", labels, stable_);
-    public let restarts = metrics.addCounter("stream_receiver_total_restarts", labels, stable_);
-    public let lastStopPos = metrics.addCounter("stream_receiver_last_stop_pos", labels, stable_);
-    public let lastRestartPos = metrics.addCounter("stream_receiver_last_restart_pos", labels, stable_);
-    public let timeSinceLastChunk = metrics.addGauge("stream_receiver_time_since_last_chunk", labels, #both, [], stable_);
+    let chunksOk = metrics.addCounter("stream_receiver_total_chunks_ok", labels, stable_);
+    let pingsOk = metrics.addCounter("stream_receiver_total_pings_ok", labels, stable_);
+    let gaps = metrics.addCounter("stream_receiver_total_gaps", labels, stable_);
+    let stops = metrics.addCounter("stream_receiver_total_stops", labels, stable_);
+    let restarts = metrics.addCounter("stream_receiver_total_restarts", labels, stable_);
+    let lastStopPos = metrics.addCounter("stream_receiver_last_stop_pos", labels, stable_);
+    let lastRestartPos = metrics.addCounter("stream_receiver_last_restart_pos", labels, stable_);
+    let timeSinceLastChunk = metrics.addGauge("stream_receiver_time_since_last_chunk", labels, #both, [], stable_);
 
     var pullValues = List.empty<{ remove : () -> () }>();
 
+    /// Initialize the tracker once by passing the Sender class to track.
     public func init(receiver : ReceiverInterface) {
       receiver_ := ?receiver;
       receiver.callbacks.onChunk := onChunk;
       pullValues.add(metrics.addPullValue("stream_receiver_length", labels, receiver.length));
     };
 
+    /// Remove all metrics created by this tracker from the PromTracker.
     public func dispose() {
       chunkSize.remove();
       stopFlag.remove();
@@ -62,9 +84,10 @@ module {
         v.remove();
       };
       pullValues.clear();
+      // TODO: clear receiver callbacks?
     };
 
-    public func onChunk(info : Types.ChunkMessageInfo, ret : Types.ControlMessage) {
+    func onChunk(info : Types.ChunkMessageInfo, ret : Types.ControlMessage) {
       let (pos, msg) = info;
       switch (msg, ret) {
         case (#chunk size, #ok) {
@@ -92,6 +115,7 @@ module {
     };
   };
 
+  /// A subtype of the Sender class.
   public type SenderInterface = {
     busyLevel : () -> Nat;
     isPaused : () -> Bool;
@@ -107,32 +131,52 @@ module {
   };
 
   /// Sender tracker.
+  ///
+  /// This class is a convenient helper used to connect one specific Sender instance
+  /// to one specific PromTracker instance.
+  ///
+  /// The PromTracker instance is passed in to the constructor.
+  /// The constructor code will then add all relevant metrics to the PromTracker. 
+  ///
+  /// The Sender instance is passed in to the init() method.
+  /// The init() method will then connect all relevant events in the Sender to update
+  /// the metrics in the PromTracker.
+  ///
+  /// Further constructor arguments are:
+  ///   labels : additional labels given to all metrics that are added to the PromTracker.
+  ///   stable_ : whether PromTracker persists the metrics across canister upgrades or not.
+  ///
+  /// If you want to connect more than one Sender to the same PromTracker then
+  /// create multiple Sender tracker instances, one for each Sender instance.
+  /// Make sure to pass different labels to each Sender tracker instance because that is
+  /// the only way the single PromTracker instance can distinguish between them.
   public class Sender(metrics : PT.PromTracker, labels : Text, stable_ : Bool) {
     var sender_ : ?SenderInterface = null;
 
     // on send
-    public let busyLevel = metrics.addGauge("stream_sender_window_size", labels, #both, [], stable_);
-    public let queueSizePreBatch = metrics.addGauge("stream_sender_queue_size_pre_batch", labels, #both, [], stable_);
-    public let queueSizePostBatch = metrics.addGauge("stream_sender_queue_size_post_batch", labels, #both, [], stable_);
-    public let chunkSize = metrics.addGauge("stream_sender_chunk_size", labels, #both, Array.tabulate<Nat>(8, func(i) = 8 ** i), stable_);
-    public let pings = metrics.addCounter("stream_sender_total_pings", labels, stable_);
-    public let skips = metrics.addCounter("stream_sender_total_skips", labels, stable_);
+    let busyLevel = metrics.addGauge("stream_sender_window_size", labels, #both, [], stable_);
+    let queueSizePreBatch = metrics.addGauge("stream_sender_queue_size_pre_batch", labels, #both, [], stable_);
+    let queueSizePostBatch = metrics.addGauge("stream_sender_queue_size_post_batch", labels, #both, [], stable_);
+    let chunkSize = metrics.addGauge("stream_sender_chunk_size", labels, #both, Array.tabulate<Nat>(8, func(i) = 8 ** i), stable_);
+    let pings = metrics.addCounter("stream_sender_total_pings", labels, stable_);
+    let skips = metrics.addCounter("stream_sender_total_skips", labels, stable_);
 
     // on response
-    public let oks = metrics.addCounter("stream_sender_total_oks", labels, stable_);
-    public let gaps = metrics.addCounter("stream_sender_total_gaps", labels, stable_);
-    public let stops = metrics.addCounter("stream_sender_total_stops", labels, stable_);
-    public let errors = metrics.addCounter("stream_sender_total_errors", labels, stable_);
-    public let stopFlag = metrics.addGauge("stream_sender_stop_flag", labels, #both, [], stable_);
-    public let pausedFlag = metrics.addGauge("stream_sender_paused_flag", labels, #both, [], stable_);
-    public let lastStopPos = metrics.addCounter("stream_sender_last_stop_pos", labels, stable_);
-    public let lastRestartPos = metrics.addCounter("stream_sender_last_restart_pos", labels, stable_);
+    let oks = metrics.addCounter("stream_sender_total_oks", labels, stable_);
+    let gaps = metrics.addCounter("stream_sender_total_gaps", labels, stable_);
+    let stops = metrics.addCounter("stream_sender_total_stops", labels, stable_);
+    let errors = metrics.addCounter("stream_sender_total_errors", labels, stable_);
+    let stopFlag = metrics.addGauge("stream_sender_stop_flag", labels, #both, [], stable_);
+    let pausedFlag = metrics.addGauge("stream_sender_paused_flag", labels, #both, [], stable_);
+    let lastStopPos = metrics.addCounter("stream_sender_last_stop_pos", labels, stable_);
+    let lastRestartPos = metrics.addCounter("stream_sender_last_restart_pos", labels, stable_);
 
     // on error
-    public let chunkErrorType = metrics.addGauge("stream_sender_chunk_error_type", labels, #none, [0, 1, 2, 3, 4, 5, 6], stable_);
+    let chunkErrorType = metrics.addGauge("stream_sender_chunk_error_type", labels, #none, [0, 1, 2, 3, 4, 5, 6], stable_);
 
     var pullValues = List.empty<{ remove : () -> () }>();
 
+    /// Initialize the tracker once by passing the Sender class to track.
     public func init(sender : SenderInterface) {
       sender_ := ?sender;
       sender.callbacks.onSend := onSend;
@@ -149,6 +193,7 @@ module {
       pullValues.add(metrics.addPullValue("stream_sender_setting_window_size", labels, sender.windowSize));
     };
 
+    /// Remove all metrics created by this tracker from the PromTracker.
     public func dispose() {
       busyLevel.remove();
       queueSizePreBatch.remove();
@@ -169,9 +214,10 @@ module {
         v.remove();
       };
       pullValues.clear();
+      // TODO: clear sender callbacks?
     };
 
-    public func onSend(c : Types.ChunkInfo) {
+    func onSend(c : Types.ChunkInfo) {
       let ?s = sender_ else return;
       busyLevel.update(s.busyLevel());
       queueSizePostBatch.update(s.queueSize());
@@ -187,11 +233,11 @@ module {
       };
     };
 
-    public func onNoSend() {
+    func onNoSend() {
       skips.add(1);
     };
 
-    public func onError(e : Error.Error) {
+    func onError(e : Error.Error) {
       let rejectCode = switch (Error.code(e)) {
         case (#call_error _) 0;
         case (#system_fatal) 1;
@@ -205,7 +251,7 @@ module {
       chunkErrorType.update(rejectCode);
     };
 
-    public func onResponse(res : Types.ControlMessage or { #error }) {
+    func onResponse(res : Types.ControlMessage or { #error }) {
       switch (res) {
         case (#ok) oks.add(1);
         case (#gap) gaps.add(1);
@@ -221,7 +267,7 @@ module {
       };
     };
 
-    public func onRestart() {
+    func onRestart() {
       let ?s = sender_ else return;
       lastRestartPos.set(s.sent());
     };
