@@ -7,7 +7,7 @@ import PT "mo:promtracker";
 
 import StreamReceiver "StreamReceiver";
 import StreamSender "StreamSender";
-import Types "types";
+import Types "internal/types";
 
 /// See use example in examples/promtracker.
 module {

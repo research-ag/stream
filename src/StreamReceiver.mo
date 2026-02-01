@@ -1,5 +1,5 @@
 import { min } "mo:core/Nat";
-import Types "types";
+import Types "internal/types";
 
 module {
   /// Return type of processing function.

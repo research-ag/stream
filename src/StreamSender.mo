@@ -4,7 +4,7 @@ import { min } "mo:core/Nat";
 import Option "mo:core/Option";
 import { type Result } "mo:core/Result";
 import SWB "mo:swb";
-import Types "types";
+import Types "internal/types";
 
 module {
   /// Status of `StreamSender`.
