@@ -30,7 +30,8 @@ persistent actor class Sender(receiverId : Principal) = self {
     };
   };
 
-  transient let metrics = PT.PromTracker("", 65);
+  transient let labels = "canister=\"" # PT.shortName(self) # "\"";
+  transient let metrics = PT.PromTracker(labels, 65);
   transient let tracker = Tracker.Sender(metrics, "", true);
 
   transient let sender = Stream.StreamSender<Text, ?Text>(
@@ -53,9 +54,8 @@ persistent actor class Sender(receiverId : Principal) = self {
   // metrics endpoint
   public query func http_request(req : HTTP.HttpRequest) : async HTTP.HttpResponse {
     let ?path = Text.split(req.url, #char '?').next() else return HTTP.render400();
-    let labels = "canister=\"" # PT.shortName(self) # "\"";
     switch (req.method, path) {
-      case ("GET", "/metrics") HTTP.renderPlainText(metrics.renderExposition(labels));
+      case ("GET", "/metrics") HTTP.renderPlainText(metrics.renderExposition(""));
       case (_) HTTP.render400();
     };
   };

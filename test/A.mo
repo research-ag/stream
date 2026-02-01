@@ -2,7 +2,7 @@ import StreamSender "../src/StreamSender";
 import Error "mo:core/Error";
 import Debug "mo:core/Debug";
 import Nat "mo:core/Nat";
-import Types "../src/types";
+import Types "../src/internal/types";
 
 // sender actor
 // argument r is the receiver's shared receive function

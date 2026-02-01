@@ -1,5 +1,5 @@
 import StreamSender "../src/StreamSender";
-import Types "../src/types";
+import Types "../src/internal/types";
 import Result "mo:core/Result";
 import Array "mo:core/Array";
 import Char "mo:core/Char";

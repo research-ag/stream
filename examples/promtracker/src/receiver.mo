@@ -5,7 +5,7 @@ import Time "mo:core/Time";
 import PT "mo:promtracker";
 import HTTP "http";
 
-persistent actor class Receiver() = self {
+persistent actor Receiver {
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
@@ -17,7 +17,8 @@ persistent actor class Receiver() = self {
     ?(10 ** 15, Time.now),
   );
 
-  transient let metrics = PT.PromTracker("", 65);
+  transient let labels = "canister=\"" # PT.shortName(Receiver) # "\"";
+  transient let metrics = PT.PromTracker(labels, 65);
   transient let tracker = Tracker.Receiver(metrics, "", false);
   tracker.init(receiver);
 
@@ -28,9 +29,8 @@ persistent actor class Receiver() = self {
   // metrics endpoint
   public query func http_request(req : HTTP.HttpRequest) : async HTTP.HttpResponse {
     let ?path = Text.split(req.url, #char '?').next() else return HTTP.render400();
-    let labels = "canister=\"" # PT.shortName(self) # "\"";
     switch (req.method, path) {
-      case ("GET", "/metrics") HTTP.renderPlainText(metrics.renderExposition(labels));
+      case ("GET", "/metrics") HTTP.renderPlainText(metrics.renderExposition(""));
       case (_) HTTP.render400();
     };
   };
