@@ -3,7 +3,7 @@ import List "mo:core/List";
 import Error "mo:core/Error";
 import Debug "mo:core/Debug";
 import Nat "mo:core/Nat";
-import Types "../src/types";
+import Types "../src/internal/types";
 
 // receiver actor
 persistent actor class B() {
