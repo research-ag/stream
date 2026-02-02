@@ -1,5 +1,11 @@
 # Streams changelog
 
+## 0.0.4
+
+* Bump promtracker dependency
+* Simplify examples
+* Update README
+
 ## 0.0.3
 
 * Add documentation

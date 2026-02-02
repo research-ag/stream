@@ -5,7 +5,6 @@ import Result "mo:core/Result";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
 import PT "mo:promtracker";
-import HTTP "http";
 
 persistent actor class Sender(receiverId : Principal) = self {
   type ControlMessage = Stream.ControlMessage;
@@ -51,12 +50,8 @@ persistent actor class Sender(receiverId : Principal) = self {
     await* sender.sendChunk();
   };
 
-  // metrics endpoint
-  public query func http_request(req : HTTP.HttpRequest) : async HTTP.HttpResponse {
-    let ?path = Text.split(req.url, #char '?').next() else return HTTP.render400();
-    switch (req.method, path) {
-      case ("GET", "/metrics") HTTP.renderPlainText(metrics.renderExposition(""));
-      case (_) HTTP.render400();
-    };
+  // Expose the `/metrics` endpoint
+  public query func http_request(req : PT.HttpReq) : async PT.HttpResp {
+    metrics.http_request(req);
   };
 };
