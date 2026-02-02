@@ -1,26 +1,35 @@
 import Stream "../../../src/StreamReceiver";
 import Error "mo:core/Error";
 
-persistent actor class Main(sender : Principal) {
-  // substitute your item type here
+persistent actor class Bob(alice : Principal) {
+  // Substitute your item type here
   type Item = Nat;
 
-  // define your processing function
+  // We define a function to process each item.
+  // It accepts the item index (position) in the stream and the item itself. 
+  // In this example the processing function simply logs the item.
+  // The function name can be freely chosen.
   transient var log_ : Text = "";
   func processItem(index : Nat, item : Item) : Bool {
-    // choose function name, keep the signature
-    log_ #= debug_show (index, item) # " "; // put your processing code here
+    // put your processing code here
+    log_ #= debug_show (index, item) # " ";
     true;
   };
 
-  // begin boilerplate
-  transient let receiver_ = Stream.StreamReceiver<Item>(processItem, null); // substitute your processing function for `processItem`
-  public shared (msg) func receive(m : Stream.ChunkMessage<Item>) : async Stream.ControlMessage {
-    // choose a name for public endpoint `receive`
-    if (msg.caller != sender) throw Error.reject("not authorized"); // use the init argument `sender` here
-    receiver_.onChunk(m); // ok to wrap custom code around this
-  };
-  // end boilerplate
+  // Now we can define our `StreamReceiver` by passing it the processing function defined above:
+  transient let receiver_ = Stream.StreamReceiver<Item>(processItem, null);
 
+  // We have to create the endpoint (update method) that Alice will call to send chunks.
+  // Here, both sides have agreed on the name "receive" for this endpoint.
+  // The type must be: `shared Stream.ChunkMessage<Item> -> async Stream.ControlMessage`
+  // It is possible to wrap custom code around calling `onChunk` but we must not tamper 
+  // with the response and we must not trap.
+  public shared (msg) func receive(m : Stream.ChunkMessage<Item>) : async Stream.ControlMessage {
+    // Make sure only Alice can call this method
+    if (msg.caller != alice) throw Error.reject("not authorized");
+    receiver_.onChunk(m);
+  };
+
+  // A getter for the log to monitor the receiver in action
   public func log() : async Text { log_ };
 };

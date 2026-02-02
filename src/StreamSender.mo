@@ -4,7 +4,7 @@ import { min } "mo:core/Nat";
 import Option "mo:core/Option";
 import { type Result } "mo:core/Result";
 import SWB "mo:swb";
-import Types "types";
+import Types "internal/types";
 
 module {
   /// Status of `StreamSender`.
@@ -57,7 +57,8 @@ module {
     sendFunc : (x : Types.ChunkMessage<S>) -> async* Types.ControlMessage,
     counterCreator : () -> { accept(item : Q) : ?S },
   ) {
-    public let buffer = SWB.SlidingWindowBuffer<Q>();
+    /// Queue for storing items to be sent.
+    let buffer = SWB.SlidingWindowBuffer<Q>();
 
     var stopped = false;
     var paused = false;

@@ -6,7 +6,7 @@ import List "mo:core/List";
 import Debug "mo:core/Debug";
 import Nat "mo:core/Nat";
 import Result "mo:core/Result";
-import Types "../src/types";
+import Types "../src/internal/types";
 
 type ChunkMessage = Types.ChunkMessage<?Text>;
 type ControlMessage = Types.ControlMessage;
