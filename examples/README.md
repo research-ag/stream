@@ -2,9 +2,9 @@
 
 Have a local replica running with `dfx start --background --clean`.
 
-Inside the example's directory (`main` or `minimal`) run:
+Inside the example's directory (`main` or `minimal` or `promtracker`) run:
 
-```
+```sh
 dfx build --check
 ./run.sh
 ```
@@ -24,4 +24,4 @@ Compared to the example above this demonstrates:
 
 ## Promtracker
 
-Example to show using trackers along with strems.
+Example to show using trackers along with streams.

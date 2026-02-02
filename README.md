@@ -34,6 +34,8 @@ Please refer to the README on GitHub where it renders properly with formulas and
 
 The API documentation can be found [here](https://mops.one/stream/docs/lib) on Mops.
 
+Examples are documented in [examples/README.md](examples/README.md).
+
 For updates, help, questions, feedback and other requests related to this package join us on:
 
 * [OpenChat group](https://oc.app/2zyqk-iqaaa-aaaar-anmra-cai)
@@ -99,12 +101,12 @@ It must be called with each arriving chunk from the sender.
 ### Install with mops
 
 You need `mops` installed. In your project directory run:
-```
+```sh
 mops add stream
 ```
 
 In the Motoko source file import the package as:
-```
+```motoko
 import StreamSender "mo:stream/StreamSender";
 import StreamReceiver "mo:stream/StreamReceiver";
 ```
@@ -113,7 +115,7 @@ import StreamReceiver "mo:stream/StreamReceiver";
 
 This example is taken from `examples/minimal`.
 
-```
+```motoko
 import Stream "../../../src/StreamSender";
 import Principal "mo:core/Principal";
 
@@ -178,7 +180,7 @@ persistent actor class Alice(bob : Principal) {
 
 This example is taken from `examples/minimal`.
 
-```
+```motoko
 import Stream "../../../src/StreamReceiver";
 import Error "mo:core/Error";
 
@@ -219,11 +221,15 @@ persistent actor class Bob(alice : Principal) {
 ### Build & test
 
 Run
-```
-git clone git@github.com:research-ag/sha2.git
+```sh
+git clone git@github.com:research-ag/stream.git
 mops install
 mops test
 ```
+
+### Executable examples
+
+See [examples/README.md](examples/README.md) for executable examples.
 
 ## Design
 

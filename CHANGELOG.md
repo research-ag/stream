@@ -3,8 +3,9 @@
 ## 0.0.4
 
 * Bump promtracker dependency
-* Simplify examples
+* Simplify promtracker example
 * Update README
+* Improve documentation in examples
 
 ## 0.0.3
 
