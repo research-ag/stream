@@ -24,7 +24,7 @@ module {
   ///
   /// Constructor arguments:
   /// * `itemCallback` function
-  /// * `timeout` is maximum waiting time between onChunk calls (default = infinite)
+  /// * `timeoutArg` defines the maximum waiting time between onChunk calls (null = infinite)
   public class StreamReceiver<T>(
     itemCallback : (pos : Nat, item : T) -> Bool,
     timeoutArg : ?(Nat, () -> Int),
