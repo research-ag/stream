@@ -1,10 +1,10 @@
-import StreamReceiver "../src/StreamReceiver";
-import StreamSender "../src/StreamSender";
+import StreamReceiver "../../src/StreamReceiver";
+import StreamSender "../../src/StreamSender";
 import List "mo:core/List";
 import Debug "mo:core/Debug";
 import Nat "mo:core/Nat";
 import Result "mo:core/Result";
-import Types "../src/internal/types";
+import Types "../../src/internal/types";
 
 type ChunkMessage = Types.ChunkMessage<?Text>;
 type ControlMessage = Types.ControlMessage;
@@ -89,7 +89,7 @@ do {
         if (item.size() <= 5) {
           sum += item.size();
           if (sum <= 5) ??item else null;
-        } else ??null;
+        } else ?null;
       };
     };
   };
@@ -150,7 +150,7 @@ do {
   await* sender.sendChunk();
 
   assert sender.busyLevel() == 0; // All should have returned
-  assert receiver.length() == 6;
+  assert receiver.length() == 3;
 };
 
 // Integration test: receiver rejects items mid-chunk

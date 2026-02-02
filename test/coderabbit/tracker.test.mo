@@ -1,12 +1,12 @@
-import Tracker "../src/Tracker";
-import StreamReceiver "../src/StreamReceiver";
-import StreamSender "../src/StreamSender";
+import Tracker "../../src/Tracker";
+import StreamReceiver "../../src/StreamReceiver";
+import StreamSender "../../src/StreamSender";
 import PT "mo:promtracker";
 import Debug "mo:core/Debug";
 import Error "mo:core/Error";
 import Result "mo:core/Result";
-import Types "../src/internal/types";
-import Base "sender.base";
+import Types "../../src/internal/types";
+import Base "../sender.base";
 
 type ControlMessage = Types.ControlMessage;
 type ChunkMessage = Types.ChunkMessage<?Text>;

@@ -1,4 +1,4 @@
-import Types "../src/internal/types";
+import Types "../../src/internal/types";
 import Debug "mo:core/Debug";
 
 // Test ChunkPayload types

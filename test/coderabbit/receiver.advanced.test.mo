@@ -1,4 +1,4 @@
-import StreamReceiver "../src/StreamReceiver";
+import StreamReceiver "../../src/StreamReceiver";
 import Debug "mo:core/Debug";
 import Nat "mo:core/Nat";
 
@@ -267,7 +267,7 @@ do {
   time := 10; // Exactly at timeout boundary
   assert receiver.onChunk((1, #chunk(["b"]))) == #ok; // Should still work
 
-  time := 11; // Now exceeded
+  time := 21; // Now exceeded timeout boundary since last onChunk call
   assert receiver.onChunk((2, #chunk(["c"]))) == #stop 0;
 };
 

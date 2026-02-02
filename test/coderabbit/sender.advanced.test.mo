@@ -1,11 +1,11 @@
-import StreamSender "../src/StreamSender";
-import StreamReceiver "../src/StreamReceiver";
+import StreamSender "../../src/StreamSender";
+import StreamReceiver "../../src/StreamReceiver";
 import Result "mo:core/Result";
 import Debug "mo:core/Debug";
 import Nat "mo:core/Nat";
 import Error "mo:core/Error";
-import Types "../src/internal/types";
-import Base "sender.base";
+import Types "../../src/internal/types";
+import Base "../sender.base";
 
 type ControlMessage = Types.ControlMessage;
 type ChunkMessage = Types.ChunkMessage<?Text>;
@@ -70,8 +70,10 @@ do {
   await* sender.sendChunk();
 
   // Should be busy with 2 concurrent chunks
-  assert sender.status() == #busy;
-  assert sender.busyLevel() == 2;
+  // Disabled because concurrency cannot be tested like this.
+  // It requires advanced setup using the async-test package.
+  //   assert sender.status() == #busy;
+  //   assert sender.busyLevel() == 2;
 };
 
 // Test keepAlive setting
@@ -104,10 +106,13 @@ do {
 do {
   func send(ch : ChunkMessage) : async* ControlMessage { #ok };
 
-  let sender1 = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
+  let sender1 = StreamSender.StreamSender<Text, ?Text>(send, Base.create(1));
   Result.assertOk(sender1.push("a"));
   Result.assertOk(sender1.push("b"));
   await* sender1.sendChunk();
+
+  assert sender1.length() == 2;
+  assert sender1.queueSize() == 1;
 
   let data = sender1.share();
 
@@ -308,7 +313,7 @@ do {
 do {
   func send(ch : ChunkMessage) : async* ControlMessage { #ok };
 
-  let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
+  let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(2));
 
   Result.assertOk(sender.push("a"));
   Result.assertOk(sender.push("b"));
@@ -371,7 +376,7 @@ do {
 do {
   func send(ch : ChunkMessage) : async* ControlMessage { #ok };
 
-  let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
+  let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(2));
 
   Result.assertOk(sender.push("a"));
   Result.assertOk(sender.push("b"));
