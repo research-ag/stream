@@ -1,7 +1,18 @@
-import Stream "../../../src/StreamReceiver";
+import Error "mo:core/Error";
 import List "mo:core/List";
+import Principal "mo:core/Principal";
+import Prim "mo:prim";
+
+import Stream "../../../src/StreamReceiver";
 
 persistent actor Receiver {
+  // Read allowed caller canister principal from environment variable
+  transient let allowedCaller = Principal.fromText(
+    switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:sender")) {
+      case (?id) id;
+      case _ Prim.trap("Environment variable 'sender' not set");
+    }
+  );
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
@@ -15,7 +26,9 @@ persistent actor Receiver {
     null,
   );
 
-  public shared func receive(message : ChunkMessage) : async ControlMessage {
+  public shared (msg) func receive(message : ChunkMessage) : async ControlMessage {
+    // Make sure only Sender can call this method
+    if (msg.caller != allowedCaller) throw Error.reject("not authorized");
     receiver.onChunk(message);
   };
 

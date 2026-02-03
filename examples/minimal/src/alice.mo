@@ -5,7 +5,7 @@ persistent actor Alice {
   // Read Bob's canister ID from environment variable
   transient let bob = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:bob")) {
       case (?id) id;
-      case _ Prim.trap("Environment variable 'alice' not set");
+      case _ Prim.trap("Environment variable 'bob' not set");
     };
 
   // Substitute your item type here

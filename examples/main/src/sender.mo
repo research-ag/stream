@@ -1,12 +1,18 @@
 import Stream "../../../src/StreamSender";
-import Principal "mo:core/Principal";
 import Result "mo:core/Result";
+import Prim "mo:prim";
 
-persistent actor class Sender(receiverId : Principal) {
+persistent actor Sender {
+  // Read Receiver's canister ID from environment variable
+  transient let receiverId = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:receiver")) {
+      case (?id) id;
+      case _ Prim.trap("Environment variable 'receiver' not set");
+    };
+
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
-  transient let receiver = actor (Principal.toText(receiverId)) : actor {
+  transient let receiver = actor (receiverId) : actor {
     receive : (message : ChunkMessage) -> async ControlMessage;
   };
 

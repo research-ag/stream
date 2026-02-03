@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 icp canister call alice enqueue '(7)'
 

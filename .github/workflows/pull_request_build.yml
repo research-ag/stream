@@ -35,9 +35,22 @@ jobs:
         working-directory: ./examples/minimal
         run: icp build
 
+      - name: Build main example with icp-cli
+        working-directory: ./examples/main
+        run: icp build
+
       - name: Run minimal example with icp-cli
         working-directory: ./examples/minimal
         run: |
           icp network start -d
           icp deploy
           ./run.sh
+          icp network stop
+
+      - name: Run main example with icp-cli
+        working-directory: ./examples/main
+        run: |
+          icp network start -d
+          icp deploy
+          ./run.sh
+          icp network stop
