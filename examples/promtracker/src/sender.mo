@@ -1,16 +1,22 @@
 import Stream "../../../src/StreamSender";
 import Tracker "../../../src/Tracker";
-import Principal "mo:core/Principal";
 import Result "mo:core/Result";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
+import Prim "mo:prim";
 import PT "mo:promtracker";
 
-persistent actor class Sender(receiverId : Principal) = self {
+persistent actor Sender {
+  // Read Receiver's canister ID from environment variable
+  transient let receiverId = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:receiver")) {
+      case (?id) id;
+      case _ Prim.trap("Environment variable 'receiver' not set");
+    };
+
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
-  transient let receiver = actor (Principal.toText(receiverId)) : actor {
+  transient let receiver = actor (receiverId) : actor {
     receive : (message : ChunkMessage) -> async ControlMessage;
   };
 
@@ -29,8 +35,7 @@ persistent actor class Sender(receiverId : Principal) = self {
     };
   };
 
-  transient let labels = "canister=\"" # PT.shortName(self) # "\"";
-  transient let metrics = PT.PromTracker(labels, 65);
+  transient let metrics = PT.PromTracker(PT.canisterLabel(Sender), 65);
   transient let tracker = Tracker.Sender(metrics, "", true);
 
   transient let sender = Stream.StreamSender<Text, ?Text>(

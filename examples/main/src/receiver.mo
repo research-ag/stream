@@ -13,6 +13,7 @@ persistent actor Receiver {
       case _ Prim.trap("Environment variable 'sender' not set");
     }
   );
+
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 

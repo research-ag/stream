@@ -39,6 +39,10 @@ jobs:
         working-directory: ./examples/main
         run: icp build
 
+      - name: Build promtracker example with icp-cli
+        working-directory: ./examples/promtracker
+        run: icp build
+
       - name: Run minimal example with icp-cli
         working-directory: ./examples/minimal
         run: |
@@ -49,6 +53,14 @@ jobs:
 
       - name: Run main example with icp-cli
         working-directory: ./examples/main
+        run: |
+          icp network start -d
+          icp deploy
+          sh run.sh
+          icp network stop
+
+      - name: Run promtracker example with icp-cli
+        working-directory: ./examples/promtracker
         run: |
           icp network start -d
           icp deploy
