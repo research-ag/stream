@@ -12,8 +12,14 @@ jobs:
       - uses: caffeinelabs/setup-mops@v1
       - uses: dfinity/setup-dfx@main
 
-      - name: Confirm dfx installation
+      - name: Confirm dfx version
         run: dfx --version
+
+      - name: Install icp-cli
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/dfinity/icp-cli/releases/download/v0.1.0-beta.6/icp-cli-installer.sh | sh
+
+      - name: Confirm icp-cli version
+        run: icp --version
 
       - name: make sure moc is installed
         run: mops toolchain bin moc || mops toolchain use moc latest
@@ -24,3 +30,14 @@ jobs:
       - name: Build examples
         working-directory: ./examples
         run: for dir in *; do (if [ -d "$dir" ]; then (cd "$dir" && dfx build --check) fi); done
+
+      - name: Build minimal example with icp-cli
+        working-directory: ./examples/minimal
+        run: icp build
+
+      - name: Run minimal example with icp-cli
+        working-directory: ./examples/minimal
+        run: |
+          icp network start -d
+          icp deploy
+          ./run.sh
