@@ -229,7 +229,47 @@ mops test
 
 ### Executable examples
 
-See [examples/README.md](examples/README.md) for executable examples.
+The `examples/` directory contains executable examples.
+
+To run them locally you need to install `dfx`, for example via:
+```sh
+sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+```
+
+Also install `ic-repl`, for example by downloading a release binary from [https://github.com/dfinity/ic-repl/](https://github.com/dfinity/ic-repl/).
+
+Start a local replica with
+```sh
+dfx start --background --clean
+```
+
+Then change into any of the example directories:
+* `examples/minimal`
+* `examples/main`
+* `examples/promtracker`
+
+and run
+```sh
+dfx build --check
+./run.sh
+```
+
+The examples are described as follows.
+
+#### Minimal
+
+Minimal code required to get a sender and a receiver talking to each other.
+
+#### Main
+
+Compared to the example above this demonstrates:
+* how a more sophisticated counter for batch preparation can look like
+* how queue type can differ from sending type
+* how to send chunks from heartbeat
+
+#### Promtracker
+
+Example to show using trackers along with streams.
 
 ## Design
 
