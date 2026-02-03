@@ -19,5 +19,5 @@ Then run:
 ```sh
 icp network start -d
 icp deploy
-run.sh
+sh run.sh
 ```

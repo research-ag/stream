@@ -42,15 +42,17 @@ jobs:
       - name: Run minimal example with icp-cli
         working-directory: ./examples/minimal
         run: |
+          trap 'icp network stop' EXITr
           icp network start -d
           icp deploy
-          ./run.sh
+          sh run.sh
           icp network stop
 
       - name: Run main example with icp-cli
         working-directory: ./examples/main
         run: |
+          trap 'icp network stop' EXITr
           icp network start -d
           icp deploy
-          ./run.sh
+          sh run.sh
           icp network stop
