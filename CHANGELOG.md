@@ -1,5 +1,9 @@
 # Streams changelog
 
+## 0.0.6
+
+* Demo persistence in promtracker example
+
 ## 0.0.5
 
 * Use environment variables in examples

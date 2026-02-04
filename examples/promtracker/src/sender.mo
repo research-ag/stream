@@ -7,16 +7,20 @@ import Prim "mo:prim";
 import PT "mo:promtracker";
 
 persistent actor Sender {
-  // Read Receiver's canister ID from environment variable
-  transient let receiverId = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:receiver")) {
-      case (?id) id;
-      case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:receiver' not set");
-    };
+  // Read receiver canister id once from an environment variable.
+  //
+  // Note: We don't allow the receiver to change later because that
+  // would risk corrupting the stream state. We would create a new
+  // stream instead if we have a new receiver.
+  let receiverId : Text = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:receiver")) {
+    case (?id) id;
+    case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:receiver' not set");
+  };
 
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
-  transient let receiver = actor (receiverId) : actor {
+  let receiver = actor (receiverId) : actor {
     receive : (message : ChunkMessage) -> async ControlMessage;
   };
 
@@ -35,17 +39,27 @@ persistent actor Sender {
     };
   };
 
-  transient let metrics = PT.PromTracker(PT.canisterLabel(Sender), 65);
-  transient let tracker = Tracker.Sender(metrics, "", true);
-
   transient let sender = Stream.StreamSender<Text, ?Text>(
     func(x : ChunkMessage) : async* ControlMessage { await receiver.receive(x) },
     counter,
   );
+  sender.setKeepAlive(?(10 ** 11, Time.now));
 
-  sender.setKeepAlive(?(10 ** 15, Time.now));
-
+  transient let metrics = PT.PromTracker(PT.canisterLabel(Sender), 65);
+  transient let tracker = Tracker.Sender(metrics, "", true);
   tracker.init(sender);
+
+  // Persist stream state and metrics across upgrades
+  var streamData = sender.share();
+  var ptData = metrics.share();
+  system func postupgrade() {
+    sender.unshare(streamData);
+    metrics.unshare(ptData);
+  };
+  system func preupgrade() {
+    streamData := sender.share();
+    ptData := metrics.share();
+  };
 
   public shared func add(text : Text) : async () {
     Result.assertOk(sender.push(text));

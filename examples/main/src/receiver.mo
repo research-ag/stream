@@ -21,7 +21,7 @@ persistent actor Receiver {
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
-  transient let received = List.empty<?Text>();
+  let received = List.empty<?Text>();
 
   transient let receiver = Stream.StreamReceiver<?Text>(
     func(index : Nat, item : ?Text) : Bool {
@@ -30,6 +30,11 @@ persistent actor Receiver {
     },
     null,
   );
+
+  // Persist stream state across upgrades
+  var streamData = receiver.share();
+  system func preupgrade() = streamData := receiver.share();
+  system func postupgrade() = receiver.unshare(streamData);
 
   public shared (msg) func receive(message : ChunkMessage) : async ControlMessage {
     // Make sure only Sender can call this method

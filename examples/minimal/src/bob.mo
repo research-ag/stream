@@ -4,7 +4,7 @@ import Stream "../../../src/StreamReceiver";
 import Prim "mo:prim";
 
 persistent actor Bob {
-  // Read sender principal once from an environment variable.
+  // Read Alice's principal once from an environment variable.
   //
   // Note: We don't allow the sender to change later because that
   // would risk corrupting the stream state. We would create a new

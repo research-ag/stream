@@ -18,13 +18,22 @@ module {
   };
 
   /// StreamReceiver
-  /// * receives chunk by `onChunk` call
-  /// * validates `start` position in ChunkMessage (must match internal `length` variable)
+  ///
+  /// * receives chunk by `onChunk` call,
+  /// * validates `start` position in ChunkMessage (must match internal `length` variable),
   /// * calls `itemCallback` for each item of the chunk.
   ///
   /// Constructor arguments:
-  /// * `itemCallback` function
-  /// * `timeoutArg` defines the maximum waiting time between onChunk calls (null = infinite)
+  ///
+  /// * `itemCallback`: function which is going to be called on each received item.
+  /// * `timeoutArg`: the maximum waiting time between onChunk calls (null = infinite)
+  ///
+  /// `timeoutArg` is an optional pair of:
+  ///
+  ///   * a duration after which `StreamReceiver` times out the stream if it has not received any chunks,
+  ///   * a function returning the current time
+  ///
+  /// The duration and the function can use any time unit, as long as they use the same unit.
   public class StreamReceiver<T>(
     itemCallback : (pos : Nat, item : T) -> Bool,
     timeoutArg : ?(Nat, () -> Int),
