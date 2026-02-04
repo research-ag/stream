@@ -7,6 +7,7 @@ canisters:
       configuration:
         main: "src/alice.mo"
         args: ""
+        shrink: false
 
   - name: bob
     recipe:
@@ -14,3 +15,4 @@ canisters:
       configuration:
         main: "src/bob.mo"
         args: ""
+        shrink: false
