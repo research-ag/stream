@@ -11,11 +11,10 @@ persistent actor Receiver {
   // Note: We don't allow the sender to change later because that
   // would risk corrupting the stream state. We would create a new
   // stream instead if we have a new sender.
-  // Read allowed caller canister principal from environment variable
   let sender = Principal.fromText(
     switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:sender")) {
       case (?id) id;
-      case _ Prim.trap("Environment variable 'sender' not set");
+      case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:sender' not set");
     }
   );
 

@@ -10,7 +10,7 @@ persistent actor Sender {
   // Read Receiver's canister ID from environment variable
   transient let receiverId = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:receiver")) {
       case (?id) id;
-      case _ Prim.trap("Environment variable 'receiver' not set");
+      case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:receiver' not set");
     };
 
   type ControlMessage = Stream.ControlMessage;

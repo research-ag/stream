@@ -1,3 +1,6 @@
+#!/bin/sh
+set -e
+
 icp canister call sender add '("abc")'
 icp canister call receiver lastReceived '()'
 icp canister call sender add '("def")'

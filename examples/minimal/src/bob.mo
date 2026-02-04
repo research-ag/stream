@@ -12,7 +12,7 @@ persistent actor Bob {
   let sender = Principal.fromText(
     switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:alice")) {
       case (?id) id;
-      case _ Prim.trap("Environment variable 'alice' not set");
+      case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:alice' not set");
     }
   );
 

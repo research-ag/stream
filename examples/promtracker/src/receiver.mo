@@ -18,7 +18,7 @@ persistent actor Receiver {
   let sender = Principal.fromText(
     switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:sender")) {
       case (?id) id;
-      case _ Prim.trap("Environment variable 'sender' not set");
+      case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:sender' not set");
     }
   );
 
