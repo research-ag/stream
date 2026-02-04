@@ -23,7 +23,7 @@ persistent actor Receiver {
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
-  transient var store : ?Text = null;
+  var store : ?Text = null;
   public func lastReceived() : async ?Text { store };
 
   transient let receiver = Stream.StreamReceiver<?Text>(
@@ -35,6 +35,18 @@ persistent actor Receiver {
   transient let tracker = Tracker.Receiver(metrics, "", false);
   tracker.init(receiver);
 
+  // Persist stream state and metrics across upgrades
+  var streamData = receiver.share();
+  var ptData = metrics.share();
+  system func postupgrade() {
+    receiver.unshare(streamData);
+    metrics.unshare(ptData);
+  };
+  system func preupgrade() {
+    streamData := receiver.share();
+    ptData := metrics.share();
+  };
+
   public shared (msg) func receive(c : ChunkMessage) : async ControlMessage {
     // Make sure only Sender can call this method
     if (msg.caller != sender) throw Error.reject("not authorized");
@@ -45,9 +57,4 @@ persistent actor Receiver {
   public query func http_request(req : PT.HttpReq) : async PT.HttpResp {
     metrics.http_request(req);
   };
-
-  // Persist metrics across upgrades (optional)
-  var ptData : PT.StableData = null;
-  system func postupgrade() = metrics.unshare(ptData);
-  system func preupgrade() = ptData := metrics.share();
 };

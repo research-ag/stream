@@ -13,3 +13,5 @@ icp canister call sender add '("mno")'
 icp canister call receiver lastReceived '()'
 icp canister call sender add '("pqr")'
 icp canister call receiver lastReceived '()'
+
+#icp canister call sender http_request '(record { method = "GET"; url = "/metrics"; headers = vec {}; body = blob "" })'

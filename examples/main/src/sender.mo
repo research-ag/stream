@@ -3,16 +3,20 @@ import Result "mo:core/Result";
 import Prim "mo:prim";
 
 persistent actor Sender {
-  // Read Receiver's canister ID from environment variable
-  transient let receiverId = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:receiver")) {
-      case (?id) id;
-      case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:receiver' not set");
-    };
+  // Read receiver canister id once from an environment variable.
+  //
+  // Note: We don't allow the receiver to change later because that
+  // would risk corrupting the stream state. We would create a new
+  // stream instead if we have a new receiver.
+  let receiverId : Text = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:receiver")) {
+    case (?id) id;
+    case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:receiver' not set");
+  };
 
   type ControlMessage = Stream.ControlMessage;
   type ChunkMessage = Stream.ChunkMessage<?Text>;
 
-  transient let receiver = actor (receiverId) : actor {
+  let receiver = actor (receiverId) : actor {
     receive : (message : ChunkMessage) -> async ControlMessage;
   };
 
@@ -37,11 +41,17 @@ persistent actor Sender {
 
   transient let sender = Stream.StreamSender<Text, ?Text>(send, counter);
 
+  // Persist stream state across upgrades
+  var streamData = sender.share();
+  system func preupgrade() = streamData := sender.share();
+  system func postupgrade() = sender.unshare(streamData);
+
   public shared func add(text : Text) : async () {
     Result.assertOk(sender.push(text));
   };
 
-  system func heartbeat() : async() {
+  system func heartbeat() : async () {
     await* sender.sendChunk();
   };
+
 };
