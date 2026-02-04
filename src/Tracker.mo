@@ -30,8 +30,9 @@ module {
   /// the metrics in the PromTracker.
   ///
   /// Further constructor arguments are:
-  ///   labels : additional labels given to all metrics that are added to the PromTracker.
-  ///   stable_ : whether PromTracker persists the metrics across canister upgrades or not.
+  ///
+  /// * `labels` : additional labels given to all metrics that are added to the PromTracker.
+  /// * `stable_` : whether PromTracker persists the metrics across canister upgrades or not.
   ///
   /// If you want to connect more than one Receiver to the same PromTracker then
   /// create multiple Receiver tracker instances, one for each Receiver instance.

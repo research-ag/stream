@@ -43,7 +43,7 @@ persistent actor Sender {
     func(x : ChunkMessage) : async* ControlMessage { await receiver.receive(x) },
     counter,
   );
-  sender.setKeepAlive(?(10 ** 15, Time.now));
+  sender.setKeepAlive(?(10 ** 11, Time.now));
 
   transient let metrics = PT.PromTracker(PT.canisterLabel(Sender), 65);
   transient let tracker = Tracker.Sender(metrics, "", true);

@@ -120,18 +120,22 @@ import Stream "../../../src/StreamSender";
 import Prim "mo:prim";
 
 persistent actor Alice {
-  // Read Bob's canister ID from environment variable
-  transient let bob = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:bob")) {
-      case (?id) id;
-      case _ Prim.trap("Environment variable 'bob' not set");
-    };
+  // Read Bob's canister id once from an environment variable.
+  //
+  // Note: We don't allow the receiver to change later because that
+  // would risk corrupting the stream state. We would create a new
+  // stream instead if we have a new receiver.
+  let bob : Text = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:bob")) {
+    case (?id) id;
+    case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:bob' not set");
+  };
 
   // Substitute your item type here
   type Item = Nat;
 
   // The endpoint (update method) on Bob's side must have this type:
   type RecvFunc = shared Stream.ChunkMessage<Item> -> async Stream.ControlMessage;
-  
+
   // The endpoint (update method) on Bob's side is called "receive" in this example.
   // Hence, this is the actor supertype for Bob that we use:
   type ReceiverAPI = actor { receive : RecvFunc };
@@ -139,20 +143,20 @@ persistent actor Alice {
   // This is Bob, the receiving actor whose Principal was supplied in the init argument:
   transient let B : ReceiverAPI = actor (bob);
 
-  // This is our `sendFunc` which is simply a wrapper around Bob's `receive` method.  
-  // It is possible to wrap custom code around calling `B.receive` but we must not tamper  
+  // This is our `sendFunc` which is simply a wrapper around Bob's `receive` method.
+  // It is possible to wrap custom code around calling `B.receive` but we must not tamper
   // with the response and we must not trap.
   transient let send_ = func(x : Stream.ChunkMessage<Item>) : async* Stream.ControlMessage {
-    await B.receive(x)
+    await B.receive(x);
   };
 
-  // This is our `counterCreator`. 
+  // This is our `counterCreator`.
 
   // A class with a single `accept` method which returns `null` when a batch is full.
   // In this example we simply count the number of items and allow at most 3 items in a batch.
   // We also do not transform the items, i.e. the type of items in the queue is identical to
   // the type of items in the batch.
-  
+
   class counter_() {
     var sum = 0;
     let maxLength = 3;
@@ -174,12 +178,13 @@ persistent actor Alice {
       i += 1;
     };
   };
-  
+
   // This function shows how we trigger a chunk to formed and sent with `sendChunk`.
   public shared func batch() : async () {
     await* sender.sendChunk();
   };
 };
+
 ```
 
 ### Example of receiver
@@ -193,11 +198,15 @@ import Stream "../../../src/StreamReceiver";
 import Prim "mo:prim";
 
 persistent actor Bob {
-  // Read allowed caller canister principal from environment variable
-  transient let allowedCaller = Principal.fromText(
+  // Read Alice's principal once from an environment variable.
+  //
+  // Note: We don't allow the sender to change later because that
+  // would risk corrupting the stream state. We would create a new
+  // stream instead if we have a new sender.
+  let sender = Principal.fromText(
     switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:alice")) {
       case (?id) id;
-      case _ Prim.trap("Environment variable 'alice' not set");
+      case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:alice' not set");
     }
   );
 
@@ -225,7 +234,7 @@ persistent actor Bob {
   // with the response and we must not trap.
   public shared (msg) func receive(m : Stream.ChunkMessage<Item>) : async Stream.ControlMessage {
     // Make sure only Alice can call this method
-    if (msg.caller != allowedCaller) throw Error.reject("not authorized");
+    if (msg.caller != sender) throw Error.reject("not authorized");
     receiver_.onChunk(m);
   };
 
@@ -255,7 +264,7 @@ mops test
 ### Executable examples
 
 The `examples/` directory contains executable examples.
-To run them locally follow the instructions here: [examples/README.md](examples/README.md).
+For an overview and how to run them locally see: [examples/README.md](examples/README.md).
 
 #### Minimal
 
@@ -264,13 +273,23 @@ Minimal code required to get a sender and a receiver talking to each other.
 #### Main
 
 Compared to the example above this demonstrates:
+
 * how a more sophisticated counter for batch preparation can look like
 * how queue type can differ from sending type
 * how to send chunks from heartbeat
+* how to persist the stream across canister upgrades
 
 #### Promtracker
 
-Example to show using trackers along with streams.
+Compared to the main example this demonstrates:
+
+* how to use a Tracker connected to a stream
+* how to persist the metrics across canister upgrades
+
+You can watch the metrics from a browser at a URL like this:
+http://txyno-ch777-77776-aaaaq-cai.raw.localhost:8000/metrics
+where `txyno-ch777-77776-aaaaq-cai` is replaced by the canister id
+that is shown during `icp deploy`.
 
 ## Design
 

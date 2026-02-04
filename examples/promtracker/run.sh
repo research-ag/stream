@@ -14,4 +14,10 @@ icp canister call receiver lastReceived '()'
 icp canister call sender add '("pqr")'
 icp canister call receiver lastReceived '()'
 
-#icp canister call sender http_request '(record { method = "GET"; url = "/metrics"; headers = vec {}; body = blob "" })'
+icp deploy
+
+# stream and metrics still functioning after canister upgrade
+icp canister call sender add '("abc")'
+icp canister call receiver lastReceived '()'
+icp canister call sender add '("def")'
+icp canister call receiver lastReceived '()'

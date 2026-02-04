@@ -48,6 +48,7 @@ module {
   /// Stream sender receiving items of type `Q` with `push` function and sending them with `sendFunc` callback when calling `sendChunk`.
   ///
   /// Arguments:
+  ///
   /// * `sendFunc` typically should implement sending chunk to the receiver canister.
   /// * `counterCreator` is used to create a chunk out of pushed items.
   /// `accept` function is called sequentially on items which are added to the chunk, until receiving `null`.
@@ -297,8 +298,9 @@ module {
     public func windowSize() : Nat = settings.windowSize;
 
     /// Get `keepAlive` setting.
-    /// `keepAlive` is pair of period in seconds after which `StreamSender` should send ping chunk in case if there is no items to send and current time function.
-    /// Default value means not to ping.
+    /// This is the time period after which `StreamSender` sends a "ping chunk" in case there are no other items to send.
+    /// See `setKeepAlive` for more details.
+    /// A `null` value means the `StreamSender` does not ping.
     public func keepAliveTime() : ?Nat = Option.map<(Nat, () -> Int), Nat>(settings.keepAlive, func(x) = x.0);
 
     /// Update max queue size.
@@ -314,8 +316,14 @@ module {
     public func setWindowSize(n : Nat) = settings.windowSize := n;
 
     /// Update max interval between stream calls.
-    /// `keepAlive` is pair of period in seconds after which `StreamSender` should send ping chunk in case if there is no items to send and current time function.
-    /// Default value means not to ping.
+    /// `keepAlive` is an optional pair of:
+    ///
+    ///   * a duration after which `StreamSender` should send a "ping chunk" in case there are no other items to send
+    ///   * a function returning the current time
+    ///
+    /// The duration and the function can use any time unit, as long as they use the same unit.
+    ///
+    /// The value `null` means not to ping.
     public func setKeepAlive(seconds : ?(Nat, () -> Int)) {
       settings.keepAlive := seconds;
     };

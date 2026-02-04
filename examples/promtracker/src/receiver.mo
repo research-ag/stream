@@ -28,23 +28,23 @@ persistent actor Receiver {
 
   transient let receiver = Stream.StreamReceiver<?Text>(
     func(_ : Nat, item : ?Text) : Bool { store := item; true },
-    ?(10 ** 15, Time.now),
+    ?(10 ** 12, Time.now),
   );
 
   transient let metrics = PT.PromTracker(PT.canisterLabel(Receiver), 65);
-  transient let tracker = Tracker.Receiver(metrics, "", false);
+  transient let tracker = Tracker.Receiver(metrics, "", true);
   tracker.init(receiver);
 
   // Persist stream state and metrics across upgrades
   var streamData = receiver.share();
   var ptData = metrics.share();
-  system func postupgrade() {
-    receiver.unshare(streamData);
-    metrics.unshare(ptData);
-  };
   system func preupgrade() {
     streamData := receiver.share();
     ptData := metrics.share();
+  };
+  system func postupgrade() {
+    receiver.unshare(streamData);
+    metrics.unshare(ptData);
   };
 
   public shared (msg) func receive(c : ChunkMessage) : async ControlMessage {
