@@ -1,5 +1,5 @@
 .env
-.icp
+.icp/cache/
 .dfx
 .mops
 .tmp
