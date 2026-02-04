@@ -2,15 +2,17 @@
 
 canisters:
   - name: sender
-    recipe:
-      type: "@dfinity/motoko"
-      configuration:
-        main: "src/sender.mo"
-        args: ""
+    build:
+      steps:
+        - type: script
+          commands:
+            - command -v mops >/dev/null 2>&1 || { echo >&2 "'mops' not found on path. To install Mops, see https://mops.one/docs/install.\n"; exit 1; }
+            - $(mops toolchain bin moc) src/sender.mo $(mops sources) -o "$ICP_WASM_OUTPUT_PATH"          
 
   - name: receiver
-    recipe:
-      type: "@dfinity/motoko"
-      configuration:
-        main: "src/receiver.mo"
-        args: ""
+    build:
+      steps:
+        - type: script
+          commands:
+            - command -v mops >/dev/null 2>&1 || { echo >&2 "'mops' not found on path. To install Mops, see https://mops.one/docs/install.\n"; exit 1; }
+            - $(mops toolchain bin moc) src/receiver.mo $(mops sources) -o "$ICP_WASM_OUTPUT_PATH"          
