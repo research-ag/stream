@@ -8,9 +8,6 @@ canisters:
           commands:
             - command -v mops >/dev/null 2>&1 || { echo >&2 "'mops' not found on path. To install Mops, see https://mops.one/docs/install.\n"; exit 1; }
             - $(mops toolchain bin moc) src/alice.mo $(mops sources) -o "$ICP_WASM_OUTPUT_PATH"          
-    settings:
-      environment_variables:
-        role: "alice"
 
   - name: bob
     build:
@@ -19,6 +16,4 @@ canisters:
           commands:
             - command -v mops >/dev/null 2>&1 || { echo >&2 "'mops' not found on path. To install Mops, see https://mops.one/docs/install.\n"; exit 1; }
             - $(mops toolchain bin moc) src/bob.mo $(mops sources) -o "$ICP_WASM_OUTPUT_PATH"          
-    settings:
-      environment_variables:
-        role: "bob"
+

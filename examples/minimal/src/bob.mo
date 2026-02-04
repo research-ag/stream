@@ -4,8 +4,12 @@ import Stream "../../../src/StreamReceiver";
 import Prim "mo:prim";
 
 persistent actor Bob {
-  // Read allowed caller canister principal from environment variable
-  transient let allowedCaller = Principal.fromText(
+  // Read sender principal once from an environment variable.
+  //
+  // Note: We don't allow the sender to change later because that
+  // would risk corrupting the stream state. We would create a new
+  // stream instead if we have a new sender.
+  let sender = Principal.fromText(
     switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:alice")) {
       case (?id) id;
       case _ Prim.trap("Environment variable 'alice' not set");
@@ -36,7 +40,7 @@ persistent actor Bob {
   // with the response and we must not trap.
   public shared (msg) func receive(m : Stream.ChunkMessage<Item>) : async Stream.ControlMessage {
     // Make sure only Alice can call this method
-    if (msg.caller != allowedCaller) throw Error.reject("not authorized");
+    if (msg.caller != sender) throw Error.reject("not authorized");
     receiver_.onChunk(m);
   };
 

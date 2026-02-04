@@ -1,5 +1,11 @@
 # Streams changelog
 
+## 0.0.5
+
+* Use environment variables in examples
+* Replaced dfx with icp-cli
+* Update documentation
+
 ## 0.0.4
 
 * Bump promtracker dependency
