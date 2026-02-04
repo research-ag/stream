@@ -1,7 +1,13 @@
 import Stream "../../../src/StreamSender";
-import Principal "mo:core/Principal";
+import Prim "mo:prim";
 
-persistent actor class Alice(bob : Principal) {
+persistent actor Alice {
+  // Read Bob's canister ID from environment variable
+  transient let bob = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:bob")) {
+      case (?id) id;
+      case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:bob' not set");
+    };
+
   // Substitute your item type here
   type Item = Nat;
 
@@ -13,7 +19,7 @@ persistent actor class Alice(bob : Principal) {
   type ReceiverAPI = actor { receive : RecvFunc };
 
   // This is Bob, the receiving actor whose Principal was supplied in the init argument:
-  transient let B : ReceiverAPI = actor (Principal.toText(bob));
+  transient let B : ReceiverAPI = actor (bob);
 
   // This is our `sendFunc` which is simply a wrapper around Bob's `receive` method.  
   // It is possible to wrap custom code around calling `B.receive` but we must not tamper  

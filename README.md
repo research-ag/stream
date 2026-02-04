@@ -117,9 +117,15 @@ This example is taken from `examples/minimal`.
 
 ```motoko
 import Stream "../../../src/StreamSender";
-import Principal "mo:core/Principal";
+import Prim "mo:prim";
 
-persistent actor class Alice(bob : Principal) {
+persistent actor Alice {
+  // Read Bob's canister ID from environment variable
+  transient let bob = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:bob")) {
+      case (?id) id;
+      case _ Prim.trap("Environment variable 'bob' not set");
+    };
+
   // Substitute your item type here
   type Item = Nat;
 
@@ -131,7 +137,7 @@ persistent actor class Alice(bob : Principal) {
   type ReceiverAPI = actor { receive : RecvFunc };
 
   // This is Bob, the receiving actor whose Principal was supplied in the init argument:
-  transient let B : ReceiverAPI = actor (Principal.toText(bob));
+  transient let B : ReceiverAPI = actor (bob);
 
   // This is our `sendFunc` which is simply a wrapper around Bob's `receive` method.  
   // It is possible to wrap custom code around calling `B.receive` but we must not tamper  
@@ -181,15 +187,25 @@ persistent actor class Alice(bob : Principal) {
 This example is taken from `examples/minimal`.
 
 ```motoko
-import Stream "../../../src/StreamReceiver";
 import Error "mo:core/Error";
+import Principal "mo:core/Principal";
+import Stream "../../../src/StreamReceiver";
+import Prim "mo:prim";
 
-persistent actor class Bob(alice : Principal) {
+persistent actor Bob {
+  // Read allowed caller canister principal from environment variable
+  transient let allowedCaller = Principal.fromText(
+    switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:alice")) {
+      case (?id) id;
+      case _ Prim.trap("Environment variable 'alice' not set");
+    }
+  );
+
   // Substitute your item type here
   type Item = Nat;
 
   // We define a function to process each item.
-  // It accepts the item index (position) in the stream and the item itself. 
+  // It accepts the item index (position) in the stream and the item itself.
   // In this example the processing function simply logs the item.
   // The function name can be freely chosen.
   transient var log_ : Text = "";
@@ -205,11 +221,11 @@ persistent actor class Bob(alice : Principal) {
   // We have to create the endpoint (update method) that Alice will call to send chunks.
   // Here, both sides have agreed on the name "receive" for this endpoint.
   // The type must be: `shared Stream.ChunkMessage<Item> -> async Stream.ControlMessage`
-  // It is possible to wrap custom code around calling `onChunk` but we must not tamper 
+  // It is possible to wrap custom code around calling `onChunk` but we must not tamper
   // with the response and we must not trap.
   public shared (msg) func receive(m : Stream.ChunkMessage<Item>) : async Stream.ControlMessage {
     // Make sure only Alice can call this method
-    if (msg.caller != alice) throw Error.reject("not authorized");
+    if (msg.caller != allowedCaller) throw Error.reject("not authorized");
     receiver_.onChunk(m);
   };
 
@@ -220,6 +236,15 @@ persistent actor class Bob(alice : Principal) {
 
 ### Build & test
 
+Install [node](https://nodejs.org/) (LTS recommended) including `npm`.
+Required for `mops`.
+
+Install `mops`:
+```sh
+npm install -g ic-mops
+mops toolchain init
+```
+
 Run
 ```sh
 git clone git@github.com:research-ag/stream.git
@@ -229,7 +254,23 @@ mops test
 
 ### Executable examples
 
-See [examples/README.md](examples/README.md) for executable examples.
+The `examples/` directory contains executable examples.
+To run them locally follow the instructions here: [examples/README.md](examples/README.md).
+
+#### Minimal
+
+Minimal code required to get a sender and a receiver talking to each other.
+
+#### Main
+
+Compared to the example above this demonstrates:
+* how a more sophisticated counter for batch preparation can look like
+* how queue type can differ from sending type
+* how to send chunks from heartbeat
+
+#### Promtracker
+
+Example to show using trackers along with streams.
 
 ## Design
 

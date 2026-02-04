@@ -1,37 +1,15 @@
-#!/usr/local/bin/ic-repl
+#!/bin/sh
+set -e
 
-let receiver = call ic.provisional_create_canister_with_cycles(record { settings = null; amount = null });
-let receiver_canister = receiver.canister_id;
-let sender = call ic.provisional_create_canister_with_cycles(record { settings = null; amount = null });
-let sender_canister = sender.canister_id;
-
-call ic.install_code(
-  record {
-    arg = encode ();
-    wasm_module = file(".dfx/local/canisters/receiver/receiver.wasm");
-    mode = variant { install };
-    canister_id = receiver_canister;
-  },
-);
-call ic.install_code(
-  record {
-    arg = encode ( receiver_canister );
-    wasm_module = file(".dfx/local/canisters/sender/sender.wasm");
-    mode = variant { install };
-    canister_id = sender_canister;
-  },
-);
-
-identity user;
-call sender_canister.add("abc");
-call receiver_canister.lastReceived();
-call sender_canister.add("def");
-call receiver_canister.lastReceived();
-call sender_canister.add("ghi");
-call receiver_canister.lastReceived();
-call sender_canister.add("jkl");
-call receiver_canister.lastReceived();
-call sender_canister.add("mno");
-call receiver_canister.lastReceived();
-call sender_canister.add("pqr");
-call receiver_canister.lastReceived();
+icp canister call sender add '("abc")'
+icp canister call receiver lastReceived '()'
+icp canister call sender add '("def")'
+icp canister call receiver lastReceived '()'
+icp canister call sender add '("ghi")'
+icp canister call receiver lastReceived '()'
+icp canister call sender add '("jkl")'
+icp canister call receiver lastReceived '()'
+icp canister call sender add '("mno")'
+icp canister call receiver lastReceived '()'
+icp canister call sender add '("pqr")'
+icp canister call receiver lastReceived '()'

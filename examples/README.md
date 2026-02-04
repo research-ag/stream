@@ -1,27 +1,28 @@
-# How to run the examples locally
+# Executable examples to run locally
 
-Have a local replica running with `dfx start --background --clean`.
-
-Inside the example's directory (`main` or `minimal` or `promtracker`) run:
-
+Install `icp` executable:
 ```sh
-dfx build --check
-./run.sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/dfinity/icp-cli/releases/download/v0.1.0-beta.6/icp-cli-installer.sh | sh
 ```
 
-# Examples
+Install [node](https://nodejs.org/) (LTS recommended) including `npm`.
+Required for `mops`.
 
-## Minimal
+Install `mops`:
+```sh
+npm install -g ic-mops
+mops toolchain init
+```
 
-Minimal code required to get a sender and a receiver talking to each other.
+Change in the respective example's subdirectory, for example:
+```sh
+cd examples/minimal
+```
 
-## Main
-
-Compared to the example above this demonstrates:
-* how a more sophisticated counter for batch preparation can look like
-* how queue type can differ from sending type
-* how to send chunks from heartbeat
-
-## Promtracker
-
-Example to show using trackers along with streams.
+Then do:
+```sh
+icp network start -d
+icp deploy
+sh run.sh
+icp network stop
+```
