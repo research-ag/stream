@@ -1,9 +1,12 @@
 import Array "mo:core/Array";
 import Error "mo:core/Error";
 import Int "mo:core/Int";
-import List "mo:core/List";
 import Prim "mo:prim";
 import PT "mo:promtracker";
+import Metrics "mo:promtracker/Metrics";
+import Label "mo:promtracker/Label";
+// Import only the modules you actually use to enable dot-notation
+import { Counter; Gauge } "mo:promtracker";
 
 import StreamReceiver "StreamReceiver";
 import StreamSender "StreamSender";
@@ -38,53 +41,53 @@ module {
   /// create multiple Receiver tracker instances, one for each Receiver instance.
   /// Make sure to pass different labels to each Receiver tracker instance because that is
   /// the only way the single PromTracker instance can distinguish between them.
-  public class Receiver(metrics : PT.PromTracker, labels : Text, stable_ : Bool) {
+  public class Receiver(pt : PT.Tracker, labels : [Label.Label], _stable_ : Bool) {
     var receiver_ : ?ReceiverInterface = null;
     var previousTime : Nat = 0;
 
     // gauges
-    let chunkSize = metrics.addGauge("stream_receiver_chunk_size", labels, #both, Array.tabulate<Nat>(8, func(i) = 8 ** i), stable_);
-    let stopFlag = metrics.addGauge("stream_receiver_stop_flag", labels, #both, [], stable_);
-
-    // pulls
-    let lastChunkReceived = metrics.addPullValue("stream_receiver_last_chunk_received", labels, func() = previousTime);
+    let chunkSize = PT.Tracker.newGauge(pt, "stream_receiver_chunk_size", labels, Array.tabulate<Nat>(8, func(i) = 8 ** i));
+    let stopFlag = PT.Tracker.newGauge(pt, "stream_receiver_stop_flag", labels, []);
 
     // counters
-    let chunksOk = metrics.addCounter("stream_receiver_total_chunks_ok", labels, stable_);
-    let pingsOk = metrics.addCounter("stream_receiver_total_pings_ok", labels, stable_);
-    let gaps = metrics.addCounter("stream_receiver_total_gaps", labels, stable_);
-    let stops = metrics.addCounter("stream_receiver_total_stops", labels, stable_);
-    let restarts = metrics.addCounter("stream_receiver_total_restarts", labels, stable_);
-    let lastStopPos = metrics.addCounter("stream_receiver_last_stop_pos", labels, stable_);
-    let lastRestartPos = metrics.addCounter("stream_receiver_last_restart_pos", labels, stable_);
-    let timeSinceLastChunk = metrics.addGauge("stream_receiver_time_since_last_chunk", labels, #both, [], stable_);
-
-    let pullValues = List.empty<{ remove : () -> () }>();
+    let chunksOk = PT.Tracker.newCounter(pt, "stream_receiver_total_chunks_ok", labels);
+    let pingsOk = PT.Tracker.newCounter(pt, "stream_receiver_total_pings_ok", labels);
+    let gaps = PT.Tracker.newCounter(pt, "stream_receiver_total_gaps", labels);
+    let stops = PT.Tracker.newCounter(pt, "stream_receiver_total_stops", labels);
+    let restarts = PT.Tracker.newCounter(pt, "stream_receiver_total_restarts", labels);
+    let lastStopPos = PT.Tracker.newCounter(pt, "stream_receiver_last_stop_pos", labels);
+    let lastRestartPos = PT.Tracker.newCounter(pt, "stream_receiver_last_restart_pos", labels);
+    let timeSinceLastChunk = PT.Tracker.newGauge(pt, "stream_receiver_time_since_last_chunk", labels, []);
 
     /// Initialize the tracker once by passing the Sender class to track.
     public func init(receiver : ReceiverInterface) {
       receiver_ := ?receiver;
       receiver.callbacks.onChunk := onChunk;
-      pullValues.add(metrics.addPullValue("stream_receiver_length", labels, receiver.length));
+    };
+
+    /// Returns a pull-based metric for the stream length.
+    public func lengthMetric() : Metrics.Value {
+      let ?r = receiver_ else return PT.newValue("stream_receiver_length", labels, func() = 0);
+      PT.newValue("stream_receiver_length", labels, r.length);
+    };
+
+    /// Returns a pull-based metric for the last chunk received time.
+    public func lastChunkReceivedMetric() : Metrics.Value {
+      PT.newValue("stream_receiver_last_chunk_received", labels, func() = previousTime);
     };
 
     /// Remove all metrics created by this tracker from the PromTracker.
     public func dispose() {
-      chunkSize.remove();
-      stopFlag.remove();
-      lastChunkReceived.remove();
-      chunksOk.remove();
-      pingsOk.remove();
-      gaps.remove();
-      stops.remove();
-      restarts.remove();
-      lastStopPos.remove();
-      lastRestartPos.remove();
-      timeSinceLastChunk.remove();
-      for (v in pullValues.values()) {
-        v.remove();
-      };
-      pullValues.clear();
+      Counter.unregister(chunksOk);
+      Counter.unregister(pingsOk);
+      Counter.unregister(gaps);
+      Counter.unregister(stops);
+      Counter.unregister(restarts);
+      Counter.unregister(lastStopPos);
+      Counter.unregister(lastRestartPos);
+      Gauge.unregister(chunkSize);
+      Gauge.unregister(stopFlag);
+      Gauge.unregister(timeSinceLastChunk);
       // TODO: clear receiver callbacks?
     };
 
@@ -151,31 +154,29 @@ module {
   /// create multiple Sender tracker instances, one for each Sender instance.
   /// Make sure to pass different labels to each Sender tracker instance because that is
   /// the only way the single PromTracker instance can distinguish between them.
-  public class Sender(metrics : PT.PromTracker, labels : Text, stable_ : Bool) {
+  public class Sender(pt : PT.Tracker, labels : [Label.Label], _stable_ : Bool) {
     var sender_ : ?SenderInterface = null;
 
     // on send
-    let busyLevel = metrics.addGauge("stream_sender_window_size", labels, #both, [], stable_);
-    let queueSizePreBatch = metrics.addGauge("stream_sender_queue_size_pre_batch", labels, #both, [], stable_);
-    let queueSizePostBatch = metrics.addGauge("stream_sender_queue_size_post_batch", labels, #both, [], stable_);
-    let chunkSize = metrics.addGauge("stream_sender_chunk_size", labels, #both, Array.tabulate<Nat>(8, func(i) = 8 ** i), stable_);
-    let pings = metrics.addCounter("stream_sender_total_pings", labels, stable_);
-    let skips = metrics.addCounter("stream_sender_total_skips", labels, stable_);
+    let busyLevel = PT.Tracker.newGauge(pt, "stream_sender_window_size", labels, []);
+    let queueSizePreBatch = PT.Tracker.newGauge(pt, "stream_sender_queue_size_pre_batch", labels, []);
+    let queueSizePostBatch = PT.Tracker.newGauge(pt, "stream_sender_queue_size_post_batch", labels, []);
+    let chunkSize = PT.Tracker.newGauge(pt, "stream_sender_chunk_size", labels, Array.tabulate<Nat>(8, func(i) = 8 ** i));
+    let pings = PT.Tracker.newCounter(pt, "stream_sender_total_pings", labels);
+    let skips = PT.Tracker.newCounter(pt, "stream_sender_total_skips", labels);
 
     // on response
-    let oks = metrics.addCounter("stream_sender_total_oks", labels, stable_);
-    let gaps = metrics.addCounter("stream_sender_total_gaps", labels, stable_);
-    let stops = metrics.addCounter("stream_sender_total_stops", labels, stable_);
-    let errors = metrics.addCounter("stream_sender_total_errors", labels, stable_);
-    let stopFlag = metrics.addGauge("stream_sender_stop_flag", labels, #both, [], stable_);
-    let pausedFlag = metrics.addGauge("stream_sender_paused_flag", labels, #both, [], stable_);
-    let lastStopPos = metrics.addCounter("stream_sender_last_stop_pos", labels, stable_);
-    let lastRestartPos = metrics.addCounter("stream_sender_last_restart_pos", labels, stable_);
+    let oks = PT.Tracker.newCounter(pt, "stream_sender_total_oks", labels);
+    let gaps = PT.Tracker.newCounter(pt, "stream_sender_total_gaps", labels);
+    let stops = PT.Tracker.newCounter(pt, "stream_sender_total_stops", labels);
+    let errors = PT.Tracker.newCounter(pt, "stream_sender_total_errors", labels);
+    let stopFlag = PT.Tracker.newGauge(pt, "stream_sender_stop_flag", labels, []);
+    let pausedFlag = PT.Tracker.newGauge(pt, "stream_sender_paused_flag", labels, []);
+    let lastStopPos = PT.Tracker.newCounter(pt, "stream_sender_last_stop_pos", labels);
+    let lastRestartPos = PT.Tracker.newCounter(pt, "stream_sender_last_restart_pos", labels);
 
     // on error
-    let chunkErrorType = metrics.addGauge("stream_sender_chunk_error_type", labels, #none, [0, 1, 2, 3, 4, 5, 6], stable_);
-
-    let pullValues = List.empty<{ remove : () -> () }>();
+    let chunkErrorType = PT.Tracker.newGauge(pt, "stream_sender_chunk_error_type", labels, [0, 1, 2, 3, 4, 5, 6]);
 
     /// Initialize the tracker once by passing the Sender class to track.
     public func init(sender : SenderInterface) {
@@ -185,36 +186,55 @@ module {
       sender.callbacks.onError := onError;
       sender.callbacks.onResponse := onResponse;
       sender.callbacks.onRestart := onRestart;
+    };
 
-      pullValues.add(metrics.addPullValue("stream_sender_sent", labels, sender.sent));
-      pullValues.add(metrics.addPullValue("stream_sender_received", labels, sender.received));
-      pullValues.add(metrics.addPullValue("stream_sender_length", labels, sender.length));
-      pullValues.add(metrics.addPullValue("stream_sender_last_chunk_sent", labels, func() : Nat = Int.abs(sender.lastChunkSent()) / 10 ** 9));
-      pullValues.add(metrics.addPullValue("stream_sender_shutdown", labels, func() = if (sender.isShutdown()) 1 else 0));
-      pullValues.add(metrics.addPullValue("stream_sender_setting_window_size", labels, sender.windowSize));
+    public func sentMetric() : Metrics.Value {
+      let ?s = sender_ else return PT.newValue("stream_sender_sent", labels, func() = 0);
+      PT.newValue("stream_sender_sent", labels, s.sent);
+    };
+
+    public func receivedMetric() : Metrics.Value {
+      let ?s = sender_ else return PT.newValue("stream_sender_received", labels, func() = 0);
+      PT.newValue("stream_sender_received", labels, s.received);
+    };
+
+    public func lengthMetric() : Metrics.Value {
+      let ?s = sender_ else return PT.newValue("stream_sender_length", labels, func() = 0);
+      PT.newValue("stream_sender_length", labels, s.length);
+    };
+
+    public func lastChunkSentMetric() : Metrics.Value {
+      let ?s = sender_ else return PT.newValue("stream_sender_last_chunk_sent", labels, func() = 0);
+      PT.newValue("stream_sender_last_chunk_sent", labels, func() : Nat = Int.abs(s.lastChunkSent()) / 10 ** 9);
+    };
+
+    public func shutdownMetric() : Metrics.Value {
+      let ?s = sender_ else return PT.newValue("stream_sender_shutdown", labels, func() = 0);
+      PT.newValue("stream_sender_shutdown", labels, func() = if (s.isShutdown()) 1 else 0);
+    };
+
+    public func windowSizeMetric() : Metrics.Value {
+      let ?s = sender_ else return PT.newValue("stream_sender_setting_window_size", labels, func() = 0);
+      PT.newValue("stream_sender_setting_window_size", labels, s.windowSize);
     };
 
     /// Remove all metrics created by this tracker from the PromTracker.
     public func dispose() {
-      busyLevel.remove();
-      queueSizePreBatch.remove();
-      queueSizePostBatch.remove();
-      chunkSize.remove();
-      pings.remove();
-      skips.remove();
-      oks.remove();
-      gaps.remove();
-      stops.remove();
-      errors.remove();
-      stopFlag.remove();
-      pausedFlag.remove();
-      lastStopPos.remove();
-      lastRestartPos.remove();
-      chunkErrorType.remove();
-      for (v in pullValues.values()) {
-        v.remove();
-      };
-      pullValues.clear();
+      Gauge.unregister(busyLevel);
+      Gauge.unregister(queueSizePreBatch);
+      Gauge.unregister(queueSizePostBatch);
+      Gauge.unregister(chunkSize);
+      Counter.unregister(pings);
+      Counter.unregister(skips);
+      Counter.unregister(oks);
+      Counter.unregister(gaps);
+      Counter.unregister(stops);
+      Counter.unregister(errors);
+      Gauge.unregister(stopFlag);
+      Gauge.unregister(pausedFlag);
+      Counter.unregister(lastStopPos);
+      Counter.unregister(lastRestartPos);
+      Gauge.unregister(chunkErrorType);
       // TODO: clear sender callbacks?
     };
 

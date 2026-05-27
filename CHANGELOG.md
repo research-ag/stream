@@ -1,11 +1,12 @@
 # Streams changelog
 
-## Unreleased
+## 0.0.7
 
 ### Changed
 
 - Updated `core` from `2.0.0` to `2.5.0`.
 - Updated `swb` from `1.2.2` to `1.2.3`.
+- Updated `promtracker` to `1.0.1` and adapted to its new API.
 
 ### Fixed
 

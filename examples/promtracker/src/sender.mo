@@ -1,10 +1,12 @@
 import Stream "../../../src/StreamSender";
-import Tracker "../../../src/Tracker";
+import Tracker_ "../../../src/Tracker";
 import Result "mo:core/Result";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Prim "mo:prim";
 import PT "mo:promtracker";
+import { Tracker } "mo:promtracker";
+import Http "mo:promtracker/mixins/http";
 
 persistent actor Sender {
   // Read receiver canister id once from an environment variable.
@@ -45,20 +47,32 @@ persistent actor Sender {
   );
   sender.setKeepAlive(?(10 ** 11, Time.now));
 
-  transient let metrics = PT.PromTracker(PT.canisterLabel(Sender), 65);
-  transient let tracker = Tracker.Sender(metrics, "", true);
+  let pt = Tracker.new();
+  transient let renderer = PT.Renderer();
+  include Http(renderer.renderExposition, "/metrics");
+
+  transient let tracker = Tracker_.Sender(pt, [], true);
   tracker.init(sender);
+
+  renderer.addValue(pt.toValue());
+  renderer.addValue(tracker.sentMetric());
+  renderer.addValue(tracker.receivedMetric());
+  renderer.addValue(tracker.lengthMetric());
+  renderer.addValue(tracker.lastChunkSentMetric());
+  renderer.addValue(tracker.shutdownMetric());
+  renderer.addValue(tracker.windowSizeMetric());
+  renderer.addValue(PT.allSystemMetrics);
+  renderer.addCanisterLabel(Sender);
 
   // Persist stream state and metrics across upgrades
   var streamData = sender.share();
-  var ptData = metrics.share();
+  // Tracker is persistent, no need for share/unshare
+
   system func postupgrade() {
     sender.unshare(streamData);
-    metrics.unshare(ptData);
   };
   system func preupgrade() {
     streamData := sender.share();
-    ptData := metrics.share();
   };
 
   public shared func add(text : Text) : async () {
@@ -70,7 +84,6 @@ persistent actor Sender {
   };
 
   // Expose the `/metrics` endpoint
-  public query func http_request(req : PT.HttpReq) : async PT.HttpResp {
-    metrics.http_request(req);
-  };
+  // Using the Http mixin above provides the implementation for http_request.
+  // We can remove this manual implementation or keep it if we have other routes.
 };

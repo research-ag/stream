@@ -9,7 +9,7 @@ license = "Apache-2.0"
 [dependencies]
 core = "2.5.0"
 swb = "1.2.3"
-promtracker = "0.7.0"
+promtracker = "1.0.1"
 
 [dev-dependencies]
 async-test = "0.0.4"
