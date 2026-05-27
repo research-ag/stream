@@ -1,12 +1,13 @@
-import Stream "../../../src/StreamSender";
-import Tracker_ "../../../src/Tracker";
 import Result "mo:core/Result";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Prim "mo:prim";
-import PT "mo:promtracker";
-import { Tracker } "mo:promtracker";
+
+import { Tracker; Renderer; allSystemMetrics } "mo:promtracker";
 import Http "mo:promtracker/mixins/http";
+
+import Stream "mo:stream/StreamSender";
+import Tracker_ "mo:stream/Tracker";
 
 persistent actor Sender {
   // Read receiver canister id once from an environment variable.
@@ -48,7 +49,8 @@ persistent actor Sender {
   sender.setKeepAlive(?(10 ** 11, Time.now));
 
   let pt = Tracker.new();
-  transient let renderer = PT.Renderer();
+  transient let renderer = Renderer();
+  renderer.addCanisterLabel(Sender);
   include Http(renderer.renderExposition, "/metrics");
 
   transient let tracker = Tracker_.Sender(pt, [], true);
@@ -61,7 +63,7 @@ persistent actor Sender {
   renderer.addValue(tracker.lastChunkSentMetric());
   renderer.addValue(tracker.shutdownMetric());
   renderer.addValue(tracker.windowSizeMetric());
-  renderer.addValue(PT.allSystemMetrics);
+  renderer.addValue(allSystemMetrics);
   renderer.addCanisterLabel(Sender);
 
   // Persist stream state and metrics across upgrades
