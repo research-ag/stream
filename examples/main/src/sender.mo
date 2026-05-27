@@ -1,4 +1,4 @@
-import Stream "../../../src/StreamSender";
+import Stream "mo:stream/StreamSender";
 import Result "mo:core/Result";
 import Prim "mo:prim";
 

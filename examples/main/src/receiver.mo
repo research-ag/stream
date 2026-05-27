@@ -3,7 +3,7 @@ import List "mo:core/List";
 import Principal "mo:core/Principal";
 import Prim "mo:prim";
 
-import Stream "../../../src/StreamReceiver";
+import Stream "mo:stream/StreamReceiver";
 
 persistent actor Receiver {
   // Read sender principal once from an environment variable.

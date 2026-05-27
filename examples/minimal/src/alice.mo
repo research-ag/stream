@@ -1,4 +1,4 @@
-import Stream "../../../src/StreamSender";
+import Stream "mo:stream/StreamSender";
 import Prim "mo:prim";
 
 persistent actor Alice {
