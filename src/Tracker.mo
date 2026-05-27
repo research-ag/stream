@@ -23,7 +23,7 @@ module {
   /// to one specific PromTracker instance.
   ///
   /// The PromTracker instance is passed in to the constructor.
-  /// The constructor code will then add all relevant metrics to the PromTracker. 
+  /// The constructor code will then add all relevant metrics to the PromTracker.
   ///
   /// The Receiver instance is passed in to the init() method.
   /// The init() method will then connect all relevant events in the Receiver to update
@@ -59,7 +59,7 @@ module {
     let lastRestartPos = metrics.addCounter("stream_receiver_last_restart_pos", labels, stable_);
     let timeSinceLastChunk = metrics.addGauge("stream_receiver_time_since_last_chunk", labels, #both, [], stable_);
 
-    var pullValues = List.empty<{ remove : () -> () }>();
+    let pullValues = List.empty<{ remove : () -> () }>();
 
     /// Initialize the tracker once by passing the Sender class to track.
     public func init(receiver : ReceiverInterface) {
@@ -137,7 +137,7 @@ module {
   /// to one specific PromTracker instance.
   ///
   /// The PromTracker instance is passed in to the constructor.
-  /// The constructor code will then add all relevant metrics to the PromTracker. 
+  /// The constructor code will then add all relevant metrics to the PromTracker.
   ///
   /// The Sender instance is passed in to the init() method.
   /// The init() method will then connect all relevant events in the Sender to update
@@ -175,7 +175,7 @@ module {
     // on error
     let chunkErrorType = metrics.addGauge("stream_sender_chunk_error_type", labels, #none, [0, 1, 2, 3, 4, 5, 6], stable_);
 
-    var pullValues = List.empty<{ remove : () -> () }>();
+    let pullValues = List.empty<{ remove : () -> () }>();
 
     /// Initialize the tracker once by passing the Sender class to track.
     public func init(sender : SenderInterface) {

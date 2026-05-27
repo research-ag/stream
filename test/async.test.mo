@@ -100,10 +100,10 @@ func test(sequence : [Item]) : async* () {
 // single chunk starting from the #ready state
 do {
   let tests = [
-    (? #ok, #ready, 1, 1),
-    (? #gap, #shutdown, 0, 0),
+    (?#ok, #ready, 1, 1),
+    (?#gap, #shutdown, 0, 0),
     (null, #ready, 0, 0),
-    (? #stop 0, #stopped, 0, 0),
+    (?#stop 0, #stopped, 0, 0),
   ];
   for (t in tests.vals()) {
     let (response, status, pos, sent) = t;
@@ -114,15 +114,15 @@ do {
 // single chunk starting from the #stopped state
 do {
   let tests = [
-    (? #ok, #shutdown, 2, 0),
-    (? #gap, #stopped, 0, 0),
+    (?#ok, #shutdown, 2, 0),
+    (?#gap, #stopped, 0, 0),
     (null, #stopped, 0, 0),
-    (? #stop 0, #shutdown, 1, 0),
+    (?#stop 0, #shutdown, 1, 0),
   ];
   for (t in tests.vals()) {
     let (response, status, pos, sent) = t;
     await* test([
-      (0, ? #stop 0, #stopped, 0, 0),
+      (0, ?#stop 0, #stopped, 0, 0),
       (1, response, status, pos, sent),
     ]);
   };
@@ -131,25 +131,25 @@ do {
 // two concurrent chunks respond in order
 do {
   let tests = [
-    ([? #ok, ? #ok], [(#ready, 1, 2), (#ready, 2, 2)]),
-    ([? #ok, ? #gap], [(#ready, 1, 2), (#shutdown, 1, 1)]),
-    ([? #ok, null], [(#ready, 1, 2), (#ready, 1, 1)]),
-    ([? #ok, ? #stop 0], [(#ready, 1, 2), (#stopped, 1, 1)]),
+    ([?#ok, ?#ok], [(#ready, 1, 2), (#ready, 2, 2)]),
+    ([?#ok, ?#gap], [(#ready, 1, 2), (#shutdown, 1, 1)]),
+    ([?#ok, null], [(#ready, 1, 2), (#ready, 1, 1)]),
+    ([?#ok, ?#stop 0], [(#ready, 1, 2), (#stopped, 1, 1)]),
 
-    ([? #gap, ? #ok], [(#shutdown, 0, 0), (#shutdown, 2, 0)]),
-    ([? #gap, ? #gap], [(#shutdown, 0, 0), (#shutdown, 0, 0)]),
-    ([? #gap, null], [(#shutdown, 0, 0), (#shutdown, 0, 0)]),
-    ([? #gap, ? #stop 0], [(#shutdown, 0, 0), (#shutdown, 1, 0)]),
+    ([?#gap, ?#ok], [(#shutdown, 0, 0), (#shutdown, 2, 0)]),
+    ([?#gap, ?#gap], [(#shutdown, 0, 0), (#shutdown, 0, 0)]),
+    ([?#gap, null], [(#shutdown, 0, 0), (#shutdown, 0, 0)]),
+    ([?#gap, ?#stop 0], [(#shutdown, 0, 0), (#shutdown, 1, 0)]),
 
-    ([null, ? #ok], [(#paused, 0, 0), (#shutdown, 2, 0)]),
-    ([null, ? #gap], [(#paused, 0, 0), (#ready, 0, 0)]),
+    ([null, ?#ok], [(#paused, 0, 0), (#shutdown, 2, 0)]),
+    ([null, ?#gap], [(#paused, 0, 0), (#ready, 0, 0)]),
     ([null, null], [(#paused, 0, 0), (#ready, 0, 0)]),
-    ([null, ? #stop 0], [(#paused, 0, 0), (#shutdown, 1, 0)]),
+    ([null, ?#stop 0], [(#paused, 0, 0), (#shutdown, 1, 0)]),
 
-    ([? #stop 0, ? #ok], [(#stopped, 0, 0), (#shutdown, 2, 0)]),
-    ([? #stop 0, ? #gap], [(#stopped, 0, 0), (#stopped, 0, 0)]),
-    ([? #stop 0, null], [(#stopped, 0, 0), (#stopped, 0, 0)]),
-    ([? #stop 0, ? #stop 0], [(#stopped, 0, 0), (#shutdown, 1, 0)]),
+    ([?#stop 0, ?#ok], [(#stopped, 0, 0), (#shutdown, 2, 0)]),
+    ([?#stop 0, ?#gap], [(#stopped, 0, 0), (#stopped, 0, 0)]),
+    ([?#stop 0, null], [(#stopped, 0, 0), (#stopped, 0, 0)]),
+    ([?#stop 0, ?#stop 0], [(#stopped, 0, 0), (#shutdown, 1, 0)]),
   ];
   for (t in tests.vals()) {
     let (responses, statuses) = t;
@@ -163,25 +163,25 @@ do {
 // two concurrent chunks respond in reverse order
 do {
   let tests = [
-    ([? #ok, ? #ok], [(#ready, 2, 2), (#ready, 2, 2)]),
-    ([? #ok, ? #gap], [(#paused, 0, 1), (#ready, 1, 1)]),
-    ([? #ok, null], [(#paused, 0, 1), (#ready, 1, 1)]),
-    ([? #ok, ? #stop 0], [(#stopped, 1, 1), (#stopped, 1, 1)]),
+    ([?#ok, ?#ok], [(#ready, 2, 2), (#ready, 2, 2)]),
+    ([?#ok, ?#gap], [(#paused, 0, 1), (#ready, 1, 1)]),
+    ([?#ok, null], [(#paused, 0, 1), (#ready, 1, 1)]),
+    ([?#ok, ?#stop 0], [(#stopped, 1, 1), (#stopped, 1, 1)]),
 
-    ([? #gap, ? #ok], [(#ready, 2, 2), (#shutdown, 2, 0)]),
-    ([? #gap, ? #gap], [(#paused, 0, 1), (#shutdown, 0, 0)]),
-    ([? #gap, null], [(#paused, 0, 1), (#shutdown, 0, 0)]),
-    ([? #gap, ? #stop 0], [(#stopped, 1, 1), (#shutdown, 1, 0)]),
+    ([?#gap, ?#ok], [(#ready, 2, 2), (#shutdown, 2, 0)]),
+    ([?#gap, ?#gap], [(#paused, 0, 1), (#shutdown, 0, 0)]),
+    ([?#gap, null], [(#paused, 0, 1), (#shutdown, 0, 0)]),
+    ([?#gap, ?#stop 0], [(#stopped, 1, 1), (#shutdown, 1, 0)]),
 
-    ([null, ? #ok], [(#ready, 2, 2), (#shutdown, 2, 0)]),
-    ([null, ? #gap], [(#paused, 0, 1), (#ready, 0, 0)]),
+    ([null, ?#ok], [(#ready, 2, 2), (#shutdown, 2, 0)]),
+    ([null, ?#gap], [(#paused, 0, 1), (#ready, 0, 0)]),
     ([null, null], [(#paused, 0, 1), (#ready, 0, 0)]),
-    ([null, ? #stop 0], [(#stopped, 1, 1), (#shutdown, 1, 0)]),
+    ([null, ?#stop 0], [(#stopped, 1, 1), (#shutdown, 1, 0)]),
 
-    ([? #stop 0, ? #ok], [(#ready, 2, 2), (#shutdown, 2, 0)]),
-    ([? #stop 0, ? #gap], [(#paused, 0, 1), (#stopped, 0, 0)]),
-    ([? #stop 0, null], [(#paused, 0, 1), (#stopped, 0, 0)]),
-    ([? #stop 0, ? #stop 0], [(#stopped, 1, 1), (#shutdown, 1, 0)]),
+    ([?#stop 0, ?#ok], [(#ready, 2, 2), (#shutdown, 2, 0)]),
+    ([?#stop 0, ?#gap], [(#paused, 0, 1), (#stopped, 0, 0)]),
+    ([?#stop 0, null], [(#paused, 0, 1), (#stopped, 0, 0)]),
+    ([?#stop 0, ?#stop 0], [(#stopped, 1, 1), (#shutdown, 1, 0)]),
   ];
   for (t in tests.vals()) {
     let (responses, statuses) = t;
@@ -413,7 +413,7 @@ do {
   assert sender.status() == #busy and sender.received() == 0 and sender.sent() == N;
 
   for (i in Nat.range(0, N)) {
-    mock.release(i, ? #ok);
+    mock.release(i, ?#ok);
     await result[i];
     assert sender.status() == #ready and sender.received() == i + 1 and sender.sent() == N;
   };
@@ -446,7 +446,7 @@ do {
 
   result[1] := async await* sender.sendChunk();
   await* mock.wait(1, #called);
-  mock.release(1, ? #ok);
+  mock.release(1, ?#ok);
   await result[1];
   assert sender.status() == #ready and sender.received() == 1 and sender.sent() == 1;
 
@@ -481,7 +481,7 @@ do {
   result[1] := async await* sender.sendChunk();
   await* mock.wait(1, #called);
 
-  mock.release(1, ? #ok);
+  mock.release(1, ?#ok);
   await result[1];
   assert sender.status() == #ready and sender.received() == 2 and sender.sent() == 2;
 
@@ -494,6 +494,6 @@ do {
   await result[2];
   assert sender.status() == #paused and sender.received() == 2 and sender.sent() == 2;
 
-  mock.release(0, ? #ok);
+  mock.release(0, ?#ok);
   await result[0];
 };

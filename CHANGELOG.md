@@ -1,32 +1,43 @@
 # Streams changelog
 
+## Unreleased
+
+### Changed
+
+- Updated `core` from `2.0.0` to `2.5.0`.
+- Updated `swb` from `1.2.2` to `1.2.3`.
+
+### Fixed
+
+- Fixed compiler warnings in `src/Tracker.mo`.
+
 ## 0.0.6
 
-* Demo persistence in promtracker example
+- Demo persistence in promtracker example
 
 ## 0.0.5
 
-* Use environment variables in examples
-* Replaced dfx with icp-cli
-* Update documentation
+- Use environment variables in examples
+- Replaced dfx with icp-cli
+- Update documentation
 
 ## 0.0.4
 
-* Bump promtracker dependency
-* Simplify promtracker example
-* Update README
-* Improve documentation in examples
+- Bump promtracker dependency
+- Simplify promtracker example
+- Update README
+- Improve documentation in examples
 
 ## 0.0.3
 
-* Add documentation
-* Update dependencies
-* Make internals private
+- Add documentation
+- Update dependencies
+- Make internals private
 
 ## 0.0.2
 
-* Switch from base to core 2.0.0
+- Switch from base to core 2.0.0
 
 ## 0.0.1
 
-* Initial version
+- Initial version

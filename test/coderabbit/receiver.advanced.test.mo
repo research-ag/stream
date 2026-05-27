@@ -206,19 +206,19 @@ do {
   assert receiver.onChunk((0, #chunk(["a", "b"]))) == #ok;
   assert callbackCalled;
   assert lastInfo == ?(0, #chunk 2);
-  assert lastResponse == ? #ok;
+  assert lastResponse == ?#ok;
 
   callbackCalled := false;
   assert receiver.onChunk((2, #ping)) == #ok;
   assert callbackCalled;
   assert lastInfo == ?(2, #ping);
-  assert lastResponse == ? #ok;
+  assert lastResponse == ?#ok;
 
   callbackCalled := false;
   assert receiver.onChunk((3, #chunk(["c"]))) == #gap;
   assert callbackCalled;
   assert lastInfo == ?(3, #chunk 1);
-  assert lastResponse == ? #gap;
+  assert lastResponse == ?#gap;
 };
 
 // Test edge case: empty chunk
