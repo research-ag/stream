@@ -128,7 +128,7 @@ import StreamReceiver "mo:stream/StreamReceiver";
 This example is taken from `examples/minimal`.
 
 ```motoko
-import Stream "../../../src/StreamSender";
+import Stream "mo:stream/StreamSender";
 import Prim "mo:prim";
 
 persistent actor Alice {
@@ -206,7 +206,7 @@ This example is taken from `examples/minimal`.
 ```motoko
 import Error "mo:core/Error";
 import Principal "mo:core/Principal";
-import Stream "../../../src/StreamReceiver";
+import Stream "mo:stream/StreamReceiver";
 import Prim "mo:prim";
 
 persistent actor Bob {

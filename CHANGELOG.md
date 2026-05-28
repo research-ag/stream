@@ -7,10 +7,11 @@
 - Updated `core` from `2.0.0` to `2.5.0`.
 - Updated `swb` from `1.2.2` to `1.2.3`.
 - Updated `promtracker` to `1.0.1` and adapted to its new API.
+- Renamed `Tracker` to `StreamTracker` to not confuse with promtracker's `Tracker`
 
 ### Fixed
 
-- Fixed compiler warnings in `src/Tracker.mo`.
+- Fixed compiler warnings in `src/StreamTracker.mo`.
 
 ## 0.0.6
 

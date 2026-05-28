@@ -4,6 +4,7 @@ import StreamSender "../../src/StreamSender";
 import Debug "mo:core/Debug";
 import Error "mo:core/Error";
 import Result "mo:core/Result";
+import Text "mo:core/Text";
 import Types "../../src/internal/types";
 import Base "../sender.base";
 
@@ -119,7 +120,7 @@ do {
   let expositionAfter = metrics.renderExposition();
   // After dispose, metrics should be reduced (not all removed due to potential system metrics)
   // Just verify dispose doesn't crash
-  assert expositionAfter.size() >= 0;
+  assert expositionAfter.size() <= expositionBefore.size();
 };
 
 // Test Sender tracker initialization and metrics
@@ -302,7 +303,7 @@ do {
   let expositionAfter = metrics.renderExposition();
   // After dispose, metrics should be reduced
   // Just verify dispose doesn't crash
-  assert expositionAfter.size() >= 0;
+  assert expositionAfter.size() <= expositionBefore.size();
 };
 
 // Test multiple trackers with same PromTracker
@@ -347,7 +348,7 @@ do {
 
   let exposition = metrics.renderExposition();
   // Should include custom label
-  assert exposition.size() > 0;
+  assert exposition.startsWith(#text "stream_receiver_chunk_size_last{custom_label=\"value\"} 1 0");
 };
 
 // Test Sender tracker with different label
@@ -358,7 +359,7 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = StreamTracker.Sender(metrics, renderer, [("custom_label", "value")]);
+  let tracker = StreamTracker.Sender(metrics, renderer, [("custom_label2", "value")]);
 
   tracker.init(sender);
 
@@ -367,7 +368,7 @@ do {
 
   let exposition = metrics.renderExposition();
   // Should include custom label
-  assert exposition.size() > 0;
+  assert exposition.startsWith(#text "stream_sender_window_size_last{custom_label2=\"value\"} 0 0");
 };
 
 Debug.print("All tracker tests passed");
