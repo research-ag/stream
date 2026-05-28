@@ -1,4 +1,4 @@
-import Tracker_ "../../src/Tracker";
+import StreamTracker "../../src/StreamTracker";
 import StreamReceiver "../../src/StreamReceiver";
 import StreamSender "../../src/StreamSender";
 import Debug "mo:core/Debug";
@@ -21,7 +21,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Receiver(pt, renderer, []);
+  let tracker = StreamTracker.Receiver(pt, renderer, []);
 
   tracker.init(receiver);
 
@@ -43,7 +43,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Receiver(pt, renderer, []);
+  let tracker = StreamTracker.Receiver(pt, renderer, []);
 
   tracker.init(receiver);
 
@@ -64,7 +64,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Receiver(pt, renderer, []);
+  let tracker = StreamTracker.Receiver(pt, renderer, []);
 
   tracker.init(receiver);
 
@@ -84,7 +84,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Receiver(pt, renderer, []);
+  let tracker = StreamTracker.Receiver(pt, renderer, []);
 
   tracker.init(receiver);
 
@@ -105,7 +105,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Receiver(pt, renderer, []);
+  let tracker = StreamTracker.Receiver(pt, renderer, []);
 
   tracker.init(receiver);
 
@@ -130,7 +130,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Sender(pt, renderer, []);
+  let tracker = StreamTracker.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
@@ -151,7 +151,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Sender(pt, renderer, []);
+  let tracker = StreamTracker.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
@@ -174,7 +174,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Sender(pt, renderer, []);
+  let tracker = StreamTracker.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
@@ -195,7 +195,7 @@ do {
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   let pt = Tracker.new();
   let renderer = PT.Renderer();
-  let tracker = Tracker_.Sender(pt, renderer, []);
+  let tracker = StreamTracker.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
@@ -215,7 +215,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Sender(pt, renderer, []);
+  let tracker = StreamTracker.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
@@ -235,7 +235,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Sender(pt, renderer, []);
+  let tracker = StreamTracker.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
@@ -263,7 +263,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Sender(pt, renderer, []);
+  let tracker = StreamTracker.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
@@ -287,7 +287,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Sender(pt, renderer, []);
+  let tracker = StreamTracker.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
@@ -316,8 +316,8 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let receiverTracker = Tracker_.Receiver(pt, renderer, [("id", "receiver1")]);
-  let senderTracker = Tracker_.Sender(pt, renderer, [("id", "sender1")]);
+  let receiverTracker = StreamTracker.Receiver(pt, renderer, [("id", "receiver1")]);
+  let senderTracker = StreamTracker.Sender(pt, renderer, [("id", "sender1")]);
 
   receiverTracker.init(receiver);
   senderTracker.init(sender);
@@ -339,7 +339,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Receiver(pt, renderer, [("custom_label", "value")]);
+  let tracker = StreamTracker.Receiver(pt, renderer, [("custom_label", "value")]);
 
   tracker.init(receiver);
 
@@ -358,7 +358,7 @@ do {
   let pt = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(pt.toValue());
-  let tracker = Tracker_.Sender(pt, renderer, [("custom_label", "value")]);
+  let tracker = StreamTracker.Sender(pt, renderer, [("custom_label", "value")]);
 
   tracker.init(sender);
 

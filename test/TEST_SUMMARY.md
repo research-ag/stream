@@ -206,7 +206,7 @@ The tests are designed to:
 - ✅ All callbacks
 - ✅ Query functions
 
-### Tracker.mo
+### StreamTracker.mo
 
 - ✅ Receiver metrics collection
 - ✅ Sender metrics collection

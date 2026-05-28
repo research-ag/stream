@@ -48,7 +48,7 @@ Compared to the example above this demonstrates:
 
 Compared to the main example this demonstrates:
 
-- how to use a Tracker connected to a stream
+- how to use a StreamTracker connected to a stream
 - how to persist the metrics across canister upgrades
 
 You can watch the metrics from a browser at a URL like this:

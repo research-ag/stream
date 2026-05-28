@@ -8,7 +8,7 @@ import { Tracker; Renderer } "mo:promtracker";
 import Http "mo:promtracker/mixins/http";
 
 import Stream "mo:stream/StreamReceiver";
-import Tracker_ "mo:stream/Tracker";
+import StreamTracker "mo:stream/StreamTracker";
 
 persistent actor Receiver {
   // Read sender principal once from an environment variable.
@@ -41,7 +41,7 @@ persistent actor Receiver {
   renderer.addValue(pt.toValue());
   include Http(renderer.renderExposition, "/metrics");
 
-  transient let tracker = Tracker_.Receiver(pt, renderer, []);
+  transient let tracker = StreamTracker.Receiver(pt, renderer, []);
   tracker.init(receiver);
 
   // Persist stream state and metrics across upgrades
