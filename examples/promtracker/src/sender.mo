@@ -5,6 +5,7 @@ import Prim "mo:prim";
 
 import { Tracker; Renderer; allSystemMetrics } "mo:promtracker";
 import Http "mo:promtracker/mixins/http";
+import Metrics "mo:promtracker/Metrics";
 
 import Stream "mo:stream/StreamSender";
 import Tracker_ "mo:stream/Tracker";
@@ -51,24 +52,14 @@ persistent actor Sender {
   let pt = Tracker.new();
   transient let renderer = Renderer();
   renderer.addCanisterLabel(Sender);
+  // Expose the `/metrics` endpoint
   include Http(renderer.renderExposition, "/metrics");
 
-  transient let tracker = Tracker_.Sender(pt, [], true);
+  transient let tracker = Tracker_.Sender(pt, renderer, []);
   tracker.init(sender);
-
-  renderer.addValue(pt.toValue());
-  renderer.addValue(tracker.sentMetric());
-  renderer.addValue(tracker.receivedMetric());
-  renderer.addValue(tracker.lengthMetric());
-  renderer.addValue(tracker.lastChunkSentMetric());
-  renderer.addValue(tracker.shutdownMetric());
-  renderer.addValue(tracker.windowSizeMetric());
-  renderer.addValue(allSystemMetrics);
-  renderer.addCanisterLabel(Sender);
 
   // Persist stream state and metrics across upgrades
   var streamData = sender.share();
-  // Tracker is persistent, no need for share/unshare
 
   system func postupgrade() {
     sender.unshare(streamData);
@@ -85,7 +76,4 @@ persistent actor Sender {
     await* sender.sendChunk();
   };
 
-  // Expose the `/metrics` endpoint
-  // Using the Http mixin above provides the implementation for http_request.
-  // We can remove this manual implementation or keep it if we have other routes.
 };

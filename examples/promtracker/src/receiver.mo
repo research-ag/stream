@@ -41,7 +41,7 @@ persistent actor Receiver {
   renderer.addValue(pt.toValue());
   include Http(renderer.renderExposition, "/metrics");
 
-  transient let tracker = Tracker_.Receiver(pt, [], true);
+  transient let tracker = Tracker_.Receiver(pt, renderer, []);
   tracker.init(receiver);
 
   // Persist stream state and metrics across upgrades

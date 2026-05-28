@@ -1,12 +1,14 @@
-import Tracker "../../src/Tracker";
+import Tracker_ "../../src/Tracker";
 import StreamReceiver "../../src/StreamReceiver";
 import StreamSender "../../src/StreamSender";
-import PT "mo:promtracker";
 import Debug "mo:core/Debug";
 import Error "mo:core/Error";
 import Result "mo:core/Result";
 import Types "../../src/internal/types";
 import Base "../sender.base";
+
+import PT "mo:promtracker";
+import { Tracker; Renderer } "mo:promtracker";
 
 type ControlMessage = Types.ControlMessage;
 type ChunkMessage = Types.ChunkMessage<?Text>;
@@ -16,8 +18,10 @@ do {
   func process(index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Receiver(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Receiver(pt, renderer, []);
 
   tracker.init(receiver);
 
@@ -27,7 +31,7 @@ do {
   ignore receiver.onChunk((3, #chunk(["d"])));
 
   // Metrics should be tracked
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   assert exposition.size() > 0;
 };
 
@@ -36,8 +40,10 @@ do {
   func process(index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Receiver(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Receiver(pt, renderer, []);
 
   tracker.init(receiver);
 
@@ -45,7 +51,7 @@ do {
   // Create a gap
   ignore receiver.onChunk((2, #chunk(["c"])));
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should track the gap
   assert exposition.size() > 0;
 };
@@ -55,15 +61,17 @@ do {
   func process(index : Nat, item : Text) : Bool { false };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Receiver(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Receiver(pt, renderer, []);
 
   tracker.init(receiver);
 
   // Process chunk that will stop
   ignore receiver.onChunk((0, #chunk(["a", "b", "c"])));
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should track the stop
   assert exposition.size() > 0;
 };
@@ -73,8 +81,10 @@ do {
   func process(index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Receiver(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Receiver(pt, renderer, []);
 
   tracker.init(receiver);
 
@@ -82,7 +92,7 @@ do {
   receiver.stop();
   ignore receiver.onChunk((1, #restart));
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should track the restart
   assert exposition.size() > 0;
 };
@@ -92,19 +102,21 @@ do {
   func process(index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Receiver(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Receiver(pt, renderer, []);
 
   tracker.init(receiver);
 
   ignore receiver.onChunk((0, #chunk(["a"])));
 
-  let expositionBefore = PT.Tracker.renderExposition(pt);
+  let expositionBefore = Tracker.renderExposition(pt);
   assert expositionBefore.size() > 0;
 
   tracker.dispose();
 
-  let expositionAfter = PT.Tracker.renderExposition(pt);
+  let expositionAfter = Tracker.renderExposition(pt);
   // After dispose, metrics should be reduced (not all removed due to potential system metrics)
   // Just verify dispose doesn't crash
   assert expositionAfter.size() >= 0;
@@ -115,8 +127,10 @@ do {
   func send(ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Sender(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
@@ -125,7 +139,7 @@ do {
   await* sender.sendChunk();
 
   // Metrics should be tracked
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   assert exposition.size() > 0;
 };
 
@@ -134,15 +148,17 @@ do {
   func send(ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Sender(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
   // Send with empty queue
   await* sender.sendChunk();
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should track the skip
   assert exposition.size() > 0;
 };
@@ -155,15 +171,17 @@ do {
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   sender.setKeepAlive(?(5, func() = time));
 
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Sender(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
   time := 10;
   await* sender.sendChunk();
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should track the ping
   assert exposition.size() > 0;
 };
@@ -175,15 +193,16 @@ do {
   };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Sender(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  let tracker = Tracker_.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should track the error
   assert exposition.size() > 0;
 };
@@ -193,15 +212,17 @@ do {
   func send(ch : ChunkMessage) : async* ControlMessage { #gap };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Sender(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should track the gap
   assert exposition.size() > 0;
 };
@@ -211,15 +232,17 @@ do {
   func send(ch : ChunkMessage) : async* ControlMessage { #stop 0 };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Sender(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should track the stop
   assert exposition.size() > 0;
 };
@@ -237,8 +260,10 @@ do {
   };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Sender(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
@@ -249,7 +274,7 @@ do {
   shouldStop := false;
   assert (await sender.restart());
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should track the restart
   assert exposition.size() > 0;
 };
@@ -259,20 +284,22 @@ do {
   func send(ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Sender(pt, [], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Sender(pt, renderer, []);
 
   tracker.init(sender);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
 
-  let expositionBefore = PT.Tracker.renderExposition(pt);
+  let expositionBefore = Tracker.renderExposition(pt);
   assert expositionBefore.size() > 0;
 
   tracker.dispose();
 
-  let expositionAfter = PT.Tracker.renderExposition(pt);
+  let expositionAfter = Tracker.renderExposition(pt);
   // After dispose, metrics should be reduced
   // Just verify dispose doesn't crash
   assert expositionAfter.size() >= 0;
@@ -286,9 +313,11 @@ do {
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
 
-  let pt = PT.Tracker.new();
-  let receiverTracker = Tracker.Receiver(pt, [("id", "receiver1")], false);
-  let senderTracker = Tracker.Sender(pt, [("id", "sender1")], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let receiverTracker = Tracker_.Receiver(pt, renderer, [("id", "receiver1")]);
+  let senderTracker = Tracker_.Sender(pt, renderer, [("id", "sender1")]);
 
   receiverTracker.init(receiver);
   senderTracker.init(sender);
@@ -297,7 +326,7 @@ do {
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should track both receiver and sender metrics
   assert exposition.size() > 0;
 };
@@ -307,14 +336,16 @@ do {
   func process(index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Receiver(pt, [("custom_label", "value")], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Receiver(pt, renderer, [("custom_label", "value")]);
 
   tracker.init(receiver);
 
   ignore receiver.onChunk((0, #chunk(["a"])));
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should include custom label
   assert exposition.size() > 0;
 };
@@ -324,33 +355,18 @@ do {
   func send(ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
-  let pt = PT.Tracker.new();
-  let tracker = Tracker.Sender(pt, [("custom_label", "value")], false);
+  let pt = Tracker.new();
+  let renderer = PT.Renderer();
+  renderer.addValue(pt.toValue());
+  let tracker = Tracker_.Sender(pt, renderer, [("custom_label", "value")]);
 
   tracker.init(sender);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
 
-  let exposition = PT.Tracker.renderExposition(pt);
+  let exposition = Tracker.renderExposition(pt);
   // Should include custom label
-  assert exposition.size() > 0;
-};
-
-// Test stable metrics flag
-do {
-  func process(index : Nat, item : Text) : Bool { true };
-
-  let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
-  let pt = PT.Tracker.new();
-
-  // Create tracker with stable = true
-  let tracker = Tracker.Receiver(pt, [("test", "true")], true);
-  tracker.init(receiver);
-
-  ignore receiver.onChunk((0, #chunk(["a"])));
-
-  let exposition = PT.Tracker.renderExposition(pt);
   assert exposition.size() > 0;
 };
 
