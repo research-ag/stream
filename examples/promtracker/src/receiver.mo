@@ -39,6 +39,7 @@ persistent actor Receiver {
   transient let renderer = Renderer();
   renderer.addCanisterLabel(Receiver);
   renderer.addValue(pt.toValue());
+  // Expose the `/metrics` endpoint
   include Http(renderer.renderExposition, "/metrics");
 
   transient let tracker = StreamTracker.Receiver(pt, renderer, []);

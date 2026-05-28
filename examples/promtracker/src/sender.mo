@@ -3,9 +3,8 @@ import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Prim "mo:prim";
 
-import { Tracker; Renderer; allSystemMetrics } "mo:promtracker";
+import { Tracker; Renderer } "mo:promtracker";
 import Http "mo:promtracker/mixins/http";
-import Metrics "mo:promtracker/Metrics";
 
 import Stream "mo:stream/StreamSender";
 import StreamTracker "mo:stream/StreamTracker";
