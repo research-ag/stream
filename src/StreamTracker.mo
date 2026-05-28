@@ -24,7 +24,7 @@ module {
   /// This class is a convenient helper used to connect one specific Receiver instance
   /// to one specific PromTracker instance.
   ///
-  /// The PromTracker instance is passed in to the constructor.
+  /// The PromTracker and Renderer instances are passed in to the constructor.
   /// The constructor code will then add all relevant metrics to the PromTracker.
   ///
   /// The Receiver instance is passed in to the init() method.
@@ -144,7 +144,7 @@ module {
   /// This class is a convenient helper used to connect one specific Sender instance
   /// to one specific PromTracker instance.
   ///
-  /// The PromTracker instance is passed in to the constructor.
+  /// The PromTracker and Renderer instances are passed in to the constructor.
   /// The constructor code will then add all relevant metrics to the PromTracker.
   ///
   /// The Sender instance is passed in to the init() method.
