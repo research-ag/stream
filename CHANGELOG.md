@@ -8,6 +8,7 @@
 - Updated `swb` from `1.2.2` to `1.2.3`.
 - Updated `promtracker` to `1.0.1` and adapted to its new API.
 - Renamed `Tracker` to `StreamTracker` to not confuse with promtracker's `Tracker`
+- Converted `StreamTracker` API from class-based to static module (record type). `SenderTracker` and `ReceiverTracker` are now directly stable.
 
 ### Fixed
 
