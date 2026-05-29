@@ -1,3 +1,14 @@
+/// Prometheus tracking for stream receivers and senders.
+///
+/// This module provides helpers to track metrics for `StreamReceiver` and `StreamSender`
+/// using the `promtracker` library.
+///
+/// For a usage example, see `examples/promtracker`.
+///
+/// ```motoko name=import
+/// import { ReceiverTracker; SenderTracker; } "mo:stream/StreamTracker";
+/// ```
+
 import Array "mo:core/Array";
 import Error "mo:core/Error";
 import Int "mo:core/Int";
@@ -11,120 +22,188 @@ import StreamReceiver "StreamReceiver";
 import StreamSender "StreamSender";
 import Types "internal/types";
 
-/// See use example in examples/promtracker.
 module {
-  /// A subtype of the Receiver class.
+  /// Interface for a stream receiver that can be tracked.
+  ///
+  /// `length`: Returns the total number of bytes received.
+  /// `callbacks`: The callbacks object of the receiver.
   public type ReceiverInterface = {
     length : () -> Nat;
     callbacks : StreamReceiver.Callbacks;
   };
 
-  /// Receiver tracker.
+  /// Prometheus tracker for a stream receiver.
   ///
-  /// This class is a convenient helper used to connect one specific Receiver instance
-  /// to one specific PromTracker instance.
+  /// This module provides a helper to connect a `StreamReceiver` instance
+  /// to a `PromTracker` instance.
   ///
-  /// The PromTracker and Renderer instances are passed in to the constructor.
-  /// The constructor code will then add all relevant metrics to the PromTracker.
-  ///
-  /// The Receiver instance is passed in to the init() method.
-  /// The init() method will then connect all relevant events in the Receiver to update
-  /// the metrics in the PromTracker.
-  ///
-  /// Further constructor arguments are:
-  ///
-  /// * `labels` : additional labels given to all metrics that are added to the PromTracker.
-  ///
-  /// If you want to connect more than one Receiver to the same PromTracker then
-  /// create multiple Receiver tracker instances, one for each Receiver instance.
-  /// Make sure to pass different labels to each Receiver tracker instance because that is
-  /// the only way the single PromTracker instance can distinguish between them.
-  public class Receiver(tracker : Tracker.Tracker, renderer : PT.Renderer, labels : [Label.Label]) {
-    var receiver_ : ?ReceiverInterface = null;
-    var previousTime : Nat = 0;
+  /// ```motoko include=import
+  /// // Example usage
+  /// let tracker = ReceiverTracker.new([("role", "alice")]);
+  /// ReceiverTracker.init(tracker, receiver, promTracker, renderer);
+  /// ```
+  public module ReceiverTracker {
+    /// The state of a receiver tracker.
+    ///
+    /// `previousTime`: The time when the last chunk was received (in milliseconds).
+    /// `metrics`: The Prometheus metrics objects, or `null` if not yet initialized.
+    /// `pullValuesRef`: A reference to the pull-based values in the renderer.
+    /// `labels`: Additional labels applied to all metrics.
+    public type ReceiverTracker = {
+      var previousTime : Nat;
 
-    // gauges
-    let chunkSize = tracker.newGauge("stream_receiver_chunk_size", labels, Array.tabulate<Nat>(8, func(i) = 8 ** i));
-    let stopFlag = tracker.newGauge("stream_receiver_stop_flag", labels, []);
+      var metrics : ?{
+        // gauges
+        chunkSize : Gauge.Gauge;
+        stopFlag : Gauge.Gauge;
 
-    // pulls
-    renderer.addValue(PT.newValue("stream_receiver_last_chunk_received", labels, func() = previousTime));
+        // counters
+        chunksOk : Counter.Counter;
+        pingsOk : Counter.Counter;
+        gaps : Counter.Counter;
+        stops : Counter.Counter;
+        restarts : Counter.Counter;
+        lastStopPos : Counter.Counter;
+        lastRestartPos : Counter.Counter;
+        timeSinceLastChunk : Gauge.Gauge;
+      };
 
-    // counters
-    let chunksOk = tracker.newCounter("stream_receiver_total_chunks_ok", labels);
-    let pingsOk = tracker.newCounter("stream_receiver_total_pings_ok", labels);
-    let gaps = tracker.newCounter("stream_receiver_total_gaps", labels);
-    let stops = tracker.newCounter("stream_receiver_total_stops", labels);
-    let restarts = tracker.newCounter("stream_receiver_total_restarts", labels);
-    let lastStopPos = tracker.newCounter("stream_receiver_last_stop_pos", labels);
-    let lastRestartPos = tracker.newCounter("stream_receiver_last_restart_pos", labels);
-    let timeSinceLastChunk = tracker.newGauge("stream_receiver_time_since_last_chunk", labels, []);
+      var pullValuesRef : ?Nat;
+      labels : [Label.Label];
+    };
 
-    var pullValuesRef : ?Nat = null;
+    /// Creates a new `ReceiverTracker` instance.
+    ///
+    /// `labels`: Additional labels to be added to all metrics.
+    ///
+    /// Never traps.
+    public func new(labels : [Label.Label]) : ReceiverTracker = {
+      var previousTime = 0;
+      var metrics = null;
+      var pullValuesRef = null;
+      labels;
+    };
 
-    /// Initialize the tracker once by passing the Sender class to track.
-    public func init(receiver : ReceiverInterface) {
-      receiver_ := ?receiver;
-      receiver.callbacks.onChunk := onChunk;
-      pullValuesRef := ?renderer.addValueRef(
+    /// Initializes the tracker by connecting it to a receiver and a PromTracker.
+    ///
+    /// This method sets up the callbacks on the `receiver` and registers
+    /// metrics in the `tracker`.
+    ///
+    /// `self`: The tracker instance to initialize.
+    /// `receiver`: The stream receiver to track.
+    /// `tracker`: The PromTracker instance where metrics will be registered.
+    /// `renderer`: The Renderer instance for pull-based metrics.
+    ///
+    /// Never traps.
+    public func init(self : ReceiverTracker, receiver : ReceiverInterface, tracker : Tracker.Tracker, renderer : PT.Renderer) {
+      receiver.callbacks.onChunk := func(info, ret) { onChunk(self, info, ret) };
+      switch (self.metrics) {
+        case (null) {
+          self.metrics := ?{
+            chunkSize = tracker.newGauge("stream_receiver_chunk_size", self.labels, Array.tabulate<Nat>(8, func(i) = 8 ** i));
+            stopFlag = tracker.newGauge("stream_receiver_stop_flag", self.labels, []);
+            chunksOk = tracker.newCounter("stream_receiver_total_chunks_ok", self.labels);
+            pingsOk = tracker.newCounter("stream_receiver_total_pings_ok", self.labels);
+            gaps = tracker.newCounter("stream_receiver_total_gaps", self.labels);
+            stops = tracker.newCounter("stream_receiver_total_stops", self.labels);
+            restarts = tracker.newCounter("stream_receiver_total_restarts", self.labels);
+            lastStopPos = tracker.newCounter("stream_receiver_last_stop_pos", self.labels);
+            lastRestartPos = tracker.newCounter("stream_receiver_last_restart_pos", self.labels);
+            timeSinceLastChunk = tracker.newGauge("stream_receiver_time_since_last_chunk", self.labels, []);
+          };
+        };
+        case _ {};
+      };
+      self.pullValuesRef := ?renderer.addValueRef(
         PT.bundle(
           [
-            PT.newValue("stream_receiver_length", labels, receiver.length)
+            PT.newValue("stream_receiver_last_chunk_received", self.labels, func() = self.previousTime),
+            PT.newValue("stream_receiver_length", self.labels, receiver.length),
           ],
           [],
         )
       );
     };
 
-    /// Remove all metrics created by this tracker from the PromTracker.
-    public func dispose() {
-      chunksOk.unregister();
-      pingsOk.unregister();
-      gaps.unregister();
-      stops.unregister();
-      restarts.unregister();
-      lastStopPos.unregister();
-      lastRestartPos.unregister();
-      chunkSize.unregister();
-      stopFlag.unregister();
-      timeSinceLastChunk.unregister();
-      switch (pullValuesRef) {
-        case (?v) renderer.removeValue(v);
-        case null {};
+    /// Disposes of the tracker, unregistering all metrics.
+    ///
+    /// `self`: The tracker instance to dispose.
+    /// `renderer`: The Renderer instance to remove pull-based values from.
+    ///
+    /// Never traps.
+    public func dispose(self : ReceiverTracker, renderer : PT.Renderer) {
+      switch (self.metrics) {
+        case (?m) {
+          m.chunkSize.unregister();
+          m.stopFlag.unregister();
+          m.chunksOk.unregister();
+          m.pingsOk.unregister();
+          m.gaps.unregister();
+          m.stops.unregister();
+          m.restarts.unregister();
+          m.lastStopPos.unregister();
+          m.lastRestartPos.unregister();
+          m.timeSinceLastChunk.unregister();
+        };
+        case _ {};
       };
-      pullValuesRef := null;
+      switch (self.pullValuesRef) {
+        case (?v) renderer.removeValue(v);
+        case _ {};
+      };
       // TODO: clear receiver callbacks?
+      self.metrics := null;
+      self.pullValuesRef := null;
     };
 
-    func onChunk(info : Types.ChunkMessageInfo, ret : Types.ControlMessage) {
+    func onChunk(self : ReceiverTracker, info : Types.ChunkMessageInfo, ret : Types.ControlMessage) {
       let (pos, msg) = info;
-      switch (msg, ret) {
-        case (#chunk size, #ok) {
-          chunksOk.add(1);
-          chunkSize.update(size);
-        };
-        case (#ping, #ok) pingsOk.add(1);
-        case (#restart, #ok) {
-          restarts.add(1);
-          stopFlag.update(0);
-          lastRestartPos.set(pos);
-        };
-        case (_, #gap) gaps.add(1);
-        case (_, #stop i) {
-          stops.add(1);
-          stopFlag.update(1);
-          lastStopPos.set(pos + i);
-        };
-      };
       let now = Prim.nat64ToNat(Prim.time() / 10 ** 6);
-      if (ret != #gap and msg != #restart and previousTime != 0) {
-        timeSinceLastChunk.update(now - previousTime);
+
+      switch (self.metrics) {
+        case (?m) {
+          switch (msg, ret) {
+            case (#chunk size, #ok) {
+              m.chunksOk.add(1);
+              m.chunkSize.update(size);
+            };
+            case (#ping, #ok) m.pingsOk.add(1);
+            case (#restart, #ok) {
+              m.restarts.add(1);
+              m.stopFlag.update(0);
+              m.lastRestartPos.set(pos);
+            };
+            case (_, #gap) m.gaps.add(1);
+            case (_, #stop i) {
+              m.stops.add(1);
+              m.stopFlag.update(1);
+              m.lastStopPos.set(pos + i);
+            };
+          };
+          if (ret != #gap and msg != #restart and self.previousTime != 0) {
+            m.timeSinceLastChunk.update(now - self.previousTime);
+          };
+        };
+        case null {};
       };
-      previousTime := now;
+
+      self.previousTime := now;
     };
   };
 
-  /// A subtype of the Sender class.
+  /// Interface for a stream sender that can be tracked.
+  ///
+  /// `busyLevel`: Returns the current busy level (number of in-flight chunks).
+  /// `isPaused`: Returns `true` if the sender is paused.
+  /// `isStopped`: Returns `true` if the sender is stopped.
+  /// `isShutdown`: Returns `true` if the sender is shutdown.
+  /// `queueSize`: Returns the current number of bytes in the queue.
+  /// `sent`: Returns the total number of bytes sent.
+  /// `received`: Returns the total number of bytes received (acknowledged).
+  /// `length`: Returns the total length of the stream.
+  /// `lastChunkSent`: Returns the timestamp of the last chunk sent.
+  /// `windowSize`: Returns the current window size.
+  /// `callbacks`: The callbacks object of the sender.
   public type SenderInterface = {
     busyLevel : () -> Nat;
     isPaused : () -> Bool;
@@ -139,120 +218,186 @@ module {
     callbacks : StreamSender.Callbacks;
   };
 
-  /// Sender tracker.
+  /// Prometheus tracker for a stream sender.
   ///
-  /// This class is a convenient helper used to connect one specific Sender instance
-  /// to one specific PromTracker instance.
+  /// This module provides a helper to connect a `StreamSender` instance
+  /// to a `PromTracker` instance.
   ///
-  /// The PromTracker and Renderer instances are passed in to the constructor.
-  /// The constructor code will then add all relevant metrics to the PromTracker.
-  ///
-  /// The Sender instance is passed in to the init() method.
-  /// The init() method will then connect all relevant events in the Sender to update
-  /// the metrics in the PromTracker.
-  ///
-  /// Further constructor arguments are:
-  ///   labels : additional labels given to all metrics that are added to the PromTracker.
-  ///
-  /// If you want to connect more than one Sender to the same PromTracker then
-  /// create multiple Sender tracker instances, one for each Sender instance.
-  /// Make sure to pass different labels to each Sender tracker instance because that is
-  /// the only way the single PromTracker instance can distinguish between them.
-  public class Sender(tracker : Tracker.Tracker, renderer : PT.Renderer, labels : [Label.Label]) {
-    var sender_ : ?SenderInterface = null;
+  /// ```motoko include=import
+  /// // Example usage
+  /// let tracker = SenderTracker.new([("role", "bob")]);
+  /// SenderTracker.init(tracker, sender, promTracker, renderer);
+  /// ```
+  public module SenderTracker {
+    /// The state of a sender tracker.
+    ///
+    /// `metrics`: The Prometheus metrics objects, or `null` if not yet initialized.
+    /// `pullValuesRef`: A reference to the pull-based values in the renderer.
+    /// `labels`: Additional labels applied to all metrics.
+    public type SenderTracker = {
 
-    // on send
-    let busyLevel = tracker.newGauge("stream_sender_window_size", labels, []);
-    let queueSizePreBatch = tracker.newGauge("stream_sender_queue_size_pre_batch", labels, []);
-    let queueSizePostBatch = tracker.newGauge("stream_sender_queue_size_post_batch", labels, []);
-    let chunkSize = tracker.newGauge("stream_sender_chunk_size", labels, Array.tabulate<Nat>(8, func(i) = 8 ** i));
-    let pings = tracker.newCounter("stream_sender_total_pings", labels);
-    let skips = tracker.newCounter("stream_sender_total_skips", labels);
+      var metrics : ?{
+        // on send
+        busyLevel : Gauge.Gauge;
+        queueSizePreBatch : Gauge.Gauge;
+        queueSizePostBatch : Gauge.Gauge;
+        chunkSize : Gauge.Gauge;
+        pings : Counter.Counter;
+        skips : Counter.Counter;
 
-    // on response
-    let oks = tracker.newCounter("stream_sender_total_oks", labels);
-    let gaps = tracker.newCounter("stream_sender_total_gaps", labels);
-    let stops = tracker.newCounter("stream_sender_total_stops", labels);
-    let errors = tracker.newCounter("stream_sender_total_errors", labels);
-    let stopFlag = tracker.newGauge("stream_sender_stop_flag", labels, []);
-    let pausedFlag = tracker.newGauge("stream_sender_paused_flag", labels, []);
-    let lastStopPos = tracker.newCounter("stream_sender_last_stop_pos", labels);
-    let lastRestartPos = tracker.newCounter("stream_sender_last_restart_pos", labels);
+        // on response
+        oks : Counter.Counter;
+        gaps : Counter.Counter;
+        stops : Counter.Counter;
+        errors : Counter.Counter;
+        stopFlag : Gauge.Gauge;
+        pausedFlag : Gauge.Gauge;
+        lastStopPos : Counter.Counter;
+        lastRestartPos : Counter.Counter;
 
-    // on error
-    let chunkErrorType = tracker.newGauge("stream_sender_chunk_error_type", labels, [0, 1, 2, 3, 4, 5, 6]);
+        // on error
+        chunkErrorType : Gauge.Gauge;
+      };
 
-    var pullValuesRef : ?Nat = null;
+      var pullValuesRef : ?Nat;
+      labels : [Label.Label];
+    };
 
-    /// Initialize the tracker once by passing the Sender class to track.
-    public func init(sender : SenderInterface) {
-      sender_ := ?sender;
-      sender.callbacks.onSend := onSend;
-      sender.callbacks.onNoSend := onNoSend;
-      sender.callbacks.onError := onError;
-      sender.callbacks.onResponse := onResponse;
-      sender.callbacks.onRestart := onRestart;
-      pullValuesRef := ?renderer.addValueRef(
+    /// Creates a new `SenderTracker` instance.
+    ///
+    /// `labels`: Additional labels to be added to all metrics.
+    ///
+    /// Never traps.
+    public func new(labels : [Label.Label]) : SenderTracker = {
+      var metrics = null;
+      var pullValuesRef = null;
+      labels;
+    };
+
+    /// Initializes the tracker by connecting it to a sender and a PromTracker.
+    ///
+    /// This method sets up the callbacks on the `sender` and registers
+    /// metrics in the `tracker`.
+    ///
+    /// `self`: The tracker instance to initialize.
+    /// `sender`: The stream sender to track.
+    /// `tracker`: The PromTracker instance where metrics will be registered.
+    /// `renderer`: The Renderer instance for pull-based metrics.
+    ///
+    /// Never traps.
+    public func init(self : SenderTracker, sender : SenderInterface, tracker : Tracker.Tracker, renderer : PT.Renderer) {
+      sender.callbacks.onSend := func(c) { onSend(self, sender, c) };
+      sender.callbacks.onNoSend := func() { onNoSend(self) };
+      sender.callbacks.onError := func(e) { onError(self, e) };
+      sender.callbacks.onResponse := func(res) { onResponse(self, sender, res) };
+      sender.callbacks.onRestart := func() { onRestart(self, sender) };
+
+      switch (self.metrics) {
+        case (null) {
+          self.metrics := ?{
+            // on send
+            busyLevel = tracker.newGauge("stream_sender_window_size", self.labels, []);
+            queueSizePreBatch = tracker.newGauge("stream_sender_queue_size_pre_batch", self.labels, []);
+            queueSizePostBatch = tracker.newGauge("stream_sender_queue_size_post_batch", self.labels, []);
+            chunkSize = tracker.newGauge("stream_sender_chunk_size", self.labels, Array.tabulate<Nat>(8, func(i) = 8 ** i));
+            pings = tracker.newCounter("stream_sender_total_pings", self.labels);
+            skips = tracker.newCounter("stream_sender_total_skips", self.labels);
+
+            // on response
+            oks = tracker.newCounter("stream_sender_total_oks", self.labels);
+            gaps = tracker.newCounter("stream_sender_total_gaps", self.labels);
+            stops = tracker.newCounter("stream_sender_total_stops", self.labels);
+            errors = tracker.newCounter("stream_sender_total_errors", self.labels);
+            stopFlag = tracker.newGauge("stream_sender_stop_flag", self.labels, []);
+            pausedFlag = tracker.newGauge("stream_sender_paused_flag", self.labels, []);
+            lastStopPos = tracker.newCounter("stream_sender_last_stop_pos", self.labels);
+            lastRestartPos = tracker.newCounter("stream_sender_last_restart_pos", self.labels);
+
+            // on error
+            chunkErrorType = tracker.newGauge("stream_sender_chunk_error_type", self.labels, [0, 1, 2, 3, 4, 5, 6]);
+          };
+        };
+        case _ {};
+      };
+
+      self.pullValuesRef := ?renderer.addValueRef(
         PT.bundle(
           [
-            PT.newValue("stream_sender_sent", labels, sender.sent),
-            PT.newValue("stream_sender_received", labels, sender.received),
-            PT.newValue("stream_sender_length", labels, sender.length),
-            PT.newValue("stream_sender_last_chunk_sent", labels, func() : Nat = Int.abs(sender.lastChunkSent()) / 10 ** 9),
-            PT.newValue("stream_sender_shutdown", labels, func() = if (sender.isShutdown()) 1 else 0),
-            PT.newValue("stream_sender_setting_window_size", labels, sender.windowSize),
+            PT.newValue("stream_sender_sent", self.labels, sender.sent),
+            PT.newValue("stream_sender_received", self.labels, sender.received),
+            PT.newValue("stream_sender_length", self.labels, sender.length),
+            PT.newValue("stream_sender_last_chunk_sent", self.labels, func() : Nat = Int.abs(sender.lastChunkSent()) / 10 ** 9),
+            PT.newValue("stream_sender_shutdown", self.labels, func() = if (sender.isShutdown()) 1 else 0),
+            PT.newValue("stream_sender_setting_window_size", self.labels, sender.windowSize),
           ],
           [],
         )
       );
     };
 
-    /// Remove all metrics created by this tracker from the PromTracker.
-    public func dispose() {
-      busyLevel.unregister();
-      queueSizePreBatch.unregister();
-      queueSizePostBatch.unregister();
-      chunkSize.unregister();
-      pings.unregister();
-      skips.unregister();
-      oks.unregister();
-      gaps.unregister();
-      stops.unregister();
-      errors.unregister();
-      stopFlag.unregister();
-      pausedFlag.unregister();
-      lastStopPos.unregister();
-      lastRestartPos.unregister();
-      chunkErrorType.unregister();
-      switch (pullValuesRef) {
+    /// Disposes of the tracker, unregistering all metrics.
+    ///
+    /// `self`: The tracker instance to dispose.
+    /// `renderer`: The Renderer instance to remove pull-based values from.
+    ///
+    /// Never traps.
+    public func dispose(self : SenderTracker, renderer : PT.Renderer) {
+      switch (self.metrics) {
+        case (?m) {
+          m.busyLevel.unregister();
+          m.queueSizePreBatch.unregister();
+          m.queueSizePostBatch.unregister();
+          m.chunkSize.unregister();
+          m.pings.unregister();
+          m.skips.unregister();
+          m.oks.unregister();
+          m.gaps.unregister();
+          m.stops.unregister();
+          m.errors.unregister();
+          m.stopFlag.unregister();
+          m.pausedFlag.unregister();
+          m.lastStopPos.unregister();
+          m.lastRestartPos.unregister();
+          m.chunkErrorType.unregister();
+        };
+        case _ {};
+      };
+      switch (self.pullValuesRef) {
         case (?v) renderer.removeValue(v);
-        case null {};
+        case _ {};
       };
-      pullValuesRef := null;
       // TODO: clear receiver callbacks?
+      self.metrics := null;
+      self.pullValuesRef := null;
     };
 
-    func onSend(c : Types.ChunkInfo) {
-      let ?s = sender_ else return;
-      busyLevel.update(s.busyLevel());
-      queueSizePostBatch.update(s.queueSize());
-      switch (c) {
-        case (#ping) {
-          pings.add(1);
-          queueSizePreBatch.update(s.queueSize());
+    func onSend(self : SenderTracker, sender : SenderInterface, c : Types.ChunkInfo) {
+      switch (self.metrics) {
+        case (?m) {
+          m.busyLevel.update(sender.busyLevel());
+          m.queueSizePostBatch.update(sender.queueSize());
+          switch (c) {
+            case (#ping) {
+              m.pings.add(1);
+              m.queueSizePreBatch.update(sender.queueSize());
+            };
+            case (#chunk size) {
+              m.chunkSize.update(size);
+              m.queueSizePreBatch.update(sender.queueSize() + size);
+            };
+          };
         };
-        case (#chunk size) {
-          chunkSize.update(size);
-          queueSizePreBatch.update(s.queueSize() + size);
-        };
+        case _ {};
       };
     };
 
-    func onNoSend() {
-      skips.add(1);
+    func onNoSend(self : SenderTracker) {
+      let ?m = self.metrics else return;
+      m.skips.add(1);
     };
 
-    func onError(e : Error.Error) {
+    func onError(self : SenderTracker, e : Error.Error) {
+      let ?m = self.metrics else return;
       let rejectCode = switch (Error.code(e)) {
         case (#call_error _) 0;
         case (#system_fatal) 1;
@@ -263,28 +408,28 @@ module {
         case (#future _) 7;
         case (#system_unknown) 8;
       };
-      chunkErrorType.update(rejectCode);
+      m.chunkErrorType.update(rejectCode);
     };
 
-    func onResponse(res : Types.ControlMessage or { #error }) {
+    func onResponse(self : SenderTracker, sender : SenderInterface, res : Types.ControlMessage or { #error }) {
+      let ?m = self.metrics else return;
       switch (res) {
-        case (#ok) oks.add(1);
-        case (#gap) gaps.add(1);
-        case (#stop _) stops.add(1);
-        case (#error) errors.add(1);
+        case (#ok) m.oks.add(1);
+        case (#gap) m.gaps.add(1);
+        case (#stop _) m.stops.add(1);
+        case (#error) m.errors.add(1);
       };
-      let ?s = sender_ else return;
-      busyLevel.update(s.busyLevel());
-      stopFlag.update(if (s.isStopped()) 1 else 0);
-      pausedFlag.update(if (s.isPaused()) 1 else 0);
-      if (s.isStopped()) {
-        lastStopPos.set(s.sent());
+      m.busyLevel.update(sender.busyLevel());
+      m.stopFlag.update(if (sender.isStopped()) 1 else 0);
+      m.pausedFlag.update(if (sender.isPaused()) 1 else 0);
+      if (sender.isStopped()) {
+        m.lastStopPos.set(sender.sent());
       };
     };
 
-    func onRestart() {
-      let ?s = sender_ else return;
-      lastRestartPos.set(s.sent());
+    func onRestart(self : SenderTracker, sender : SenderInterface) {
+      let ?m = self.metrics else return;
+      m.lastRestartPos.set(sender.sent());
     };
   };
 };
