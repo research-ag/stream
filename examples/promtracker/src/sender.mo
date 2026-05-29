@@ -53,8 +53,8 @@ persistent actor Sender {
   renderer.addCanisterLabel(Sender);
   renderer.addValue(pt.toValue());
 
-  let tracker = SenderTracker.new([]);
-  tracker.init(sender, pt, renderer);
+  let tracker = SenderTracker.new(pt, []);
+  tracker.init(sender, renderer);
 
   // Expose the `/metrics` endpoint
   include Http(renderer.renderExposition, "/metrics");

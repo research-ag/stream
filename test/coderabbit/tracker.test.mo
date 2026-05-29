@@ -22,8 +22,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = ReceiverTracker.new([]);
-  tracker.init(receiver, metrics, renderer);
+  let tracker = ReceiverTracker.new(metrics, []);
+  tracker.init(receiver, renderer);
 
   // Process some chunks and verify metrics are updated
   ignore receiver.onChunk((0, #chunk(["a", "b", "c"])));
@@ -43,8 +43,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = ReceiverTracker.new([]);
-  tracker.init(receiver, metrics, renderer);
+  let tracker = ReceiverTracker.new(metrics, []);
+  tracker.init(receiver, renderer);
 
   ignore receiver.onChunk((0, #chunk(["a"])));
   // Create a gap
@@ -63,8 +63,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = ReceiverTracker.new([]);
-  tracker.init(receiver, metrics, renderer);
+  let tracker = ReceiverTracker.new(metrics, []);
+  tracker.init(receiver, renderer);
 
   // Process chunk that will stop
   ignore receiver.onChunk((0, #chunk(["a", "b", "c"])));
@@ -82,8 +82,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = ReceiverTracker.new([]);
-  tracker.init(receiver, metrics, renderer);
+  let tracker = ReceiverTracker.new(metrics, []);
+  tracker.init(receiver, renderer);
 
   ignore receiver.onChunk((0, #chunk(["a"])));
   receiver.stop();
@@ -102,8 +102,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = ReceiverTracker.new([]);
-  tracker.init(receiver, metrics, renderer);
+  let tracker = ReceiverTracker.new(metrics, []);
+  tracker.init(receiver, renderer);
 
   ignore receiver.onChunk((0, #chunk(["a"])));
 
@@ -126,8 +126,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = SenderTracker.new([]);
-  tracker.init(sender, metrics, renderer);
+  let tracker = SenderTracker.new(metrics, []);
+  tracker.init(sender, renderer);
 
   Result.assertOk(sender.push("a"));
   Result.assertOk(sender.push("b"));
@@ -146,8 +146,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = SenderTracker.new([]);
-  tracker.init(sender, metrics, renderer);
+  let tracker = SenderTracker.new(metrics, []);
+  tracker.init(sender, renderer);
 
   // Send with empty queue
   await* sender.sendChunk();
@@ -168,8 +168,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = SenderTracker.new([]);
-  tracker.init(sender, metrics, renderer);
+  let tracker = SenderTracker.new(metrics, []);
+  tracker.init(sender, renderer);
 
   time := 10;
   await* sender.sendChunk();
@@ -188,8 +188,8 @@ do {
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
-  let tracker = SenderTracker.new([]);
-  tracker.init(sender, metrics, renderer);
+  let tracker = SenderTracker.new(metrics, []);
+  tracker.init(sender, renderer);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
@@ -207,8 +207,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = SenderTracker.new([]);
-  tracker.init(sender, metrics, renderer);
+  let tracker = SenderTracker.new(metrics, []);
+  tracker.init(sender, renderer);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
@@ -226,8 +226,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = SenderTracker.new([]);
-  tracker.init(sender, metrics, renderer);
+  let tracker = SenderTracker.new(metrics, []);
+  tracker.init(sender, renderer);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
@@ -253,8 +253,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = SenderTracker.new([]);
-  tracker.init(sender, metrics, renderer);
+  let tracker = SenderTracker.new(metrics, []);
+  tracker.init(sender, renderer);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
@@ -276,8 +276,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = SenderTracker.new([]);
-  tracker.init(sender, metrics, renderer);
+  let tracker = SenderTracker.new(metrics, []);
+  tracker.init(sender, renderer);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();
@@ -304,11 +304,11 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let receiverTracker = ReceiverTracker.new([("id", "receiver1")]);
-  let senderTracker = SenderTracker.new([("id", "sender1")]);
+  let receiverTracker = ReceiverTracker.new(metrics, [("id", "receiver1")]);
+  let senderTracker = SenderTracker.new(metrics, [("id", "sender1")]);
 
-  receiverTracker.init(receiver, metrics, renderer);
-  senderTracker.init(sender, metrics, renderer);
+  receiverTracker.init(receiver, renderer);
+  senderTracker.init(sender, renderer);
 
   ignore receiver.onChunk((0, #chunk(["a"])));
   Result.assertOk(sender.push("a"));
@@ -327,8 +327,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = ReceiverTracker.new([("custom_label", "value")]);
-  tracker.init(receiver, metrics, renderer);
+  let tracker = ReceiverTracker.new(metrics, [("custom_label", "value")]);
+  tracker.init(receiver, renderer);
 
   ignore receiver.onChunk((0, #chunk(["a"])));
 
@@ -345,8 +345,8 @@ do {
   let metrics = Tracker.new();
   let renderer = PT.Renderer();
   renderer.addValue(metrics.toValue());
-  let tracker = SenderTracker.new([("custom_label2", "value")]);
-  tracker.init(sender, metrics, renderer);
+  let tracker = SenderTracker.new(metrics, [("custom_label2", "value")]);
+  tracker.init(sender, renderer);
 
   Result.assertOk(sender.push("a"));
   await* sender.sendChunk();

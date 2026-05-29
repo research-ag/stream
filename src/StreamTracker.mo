@@ -40,7 +40,7 @@ module {
   /// ```motoko include=import
   /// // Example usage
   /// let tracker = ReceiverTracker.new([("role", "alice")]);
-  /// ReceiverTracker.init(tracker, receiver, promTracker, renderer);
+  /// ReceiverTracker.init(tracker, receiver, renderer);
   /// ```
   public module ReceiverTracker {
     /// The state of a receiver tracker.
@@ -50,6 +50,9 @@ module {
     /// `pullValuesRef`: A reference to the pull-based values in the renderer.
     /// `labels`: Additional labels applied to all metrics.
     public type ReceiverTracker = {
+      tracker : Tracker.Tracker;
+      labels : [Label.Label];
+
       var previousTime : Nat;
 
       var metrics : ?{
@@ -69,19 +72,20 @@ module {
       };
 
       var pullValuesRef : ?Nat;
-      labels : [Label.Label];
     };
 
     /// Creates a new `ReceiverTracker` instance.
     ///
+    /// `tracker`: The PromTracker instance where metrics will be registered.
     /// `labels`: Additional labels to be added to all metrics.
     ///
     /// Never traps.
-    public func new(labels : [Label.Label]) : ReceiverTracker = {
+    public func new(tracker : Tracker.Tracker, labels : [Label.Label]) : ReceiverTracker = {
+      tracker;
+      labels;
       var previousTime = 0;
       var metrics = null;
       var pullValuesRef = null;
-      labels;
     };
 
     /// Initializes the tracker by connecting it to a receiver and a PromTracker.
@@ -95,21 +99,21 @@ module {
     /// `renderer`: The Renderer instance for pull-based metrics.
     ///
     /// Never traps.
-    public func init(self : ReceiverTracker, receiver : ReceiverInterface, tracker : Tracker.Tracker, renderer : PT.Renderer) {
+    public func init(self : ReceiverTracker, receiver : ReceiverInterface, renderer : PT.Renderer) {
       receiver.callbacks.onChunk := func(info, ret) { onChunk(self, info, ret) };
       switch (self.metrics) {
         case (null) {
           self.metrics := ?{
-            chunkSize = tracker.newGauge("stream_receiver_chunk_size", self.labels, Array.tabulate<Nat>(8, func(i) = 8 ** i));
-            stopFlag = tracker.newGauge("stream_receiver_stop_flag", self.labels, []);
-            chunksOk = tracker.newCounter("stream_receiver_total_chunks_ok", self.labels);
-            pingsOk = tracker.newCounter("stream_receiver_total_pings_ok", self.labels);
-            gaps = tracker.newCounter("stream_receiver_total_gaps", self.labels);
-            stops = tracker.newCounter("stream_receiver_total_stops", self.labels);
-            restarts = tracker.newCounter("stream_receiver_total_restarts", self.labels);
-            lastStopPos = tracker.newCounter("stream_receiver_last_stop_pos", self.labels);
-            lastRestartPos = tracker.newCounter("stream_receiver_last_restart_pos", self.labels);
-            timeSinceLastChunk = tracker.newGauge("stream_receiver_time_since_last_chunk", self.labels, []);
+            chunkSize = self.tracker.newGauge("stream_receiver_chunk_size", self.labels, Array.tabulate<Nat>(8, func(i) = 8 ** i));
+            stopFlag = self.tracker.newGauge("stream_receiver_stop_flag", self.labels, []);
+            chunksOk = self.tracker.newCounter("stream_receiver_total_chunks_ok", self.labels);
+            pingsOk = self.tracker.newCounter("stream_receiver_total_pings_ok", self.labels);
+            gaps = self.tracker.newCounter("stream_receiver_total_gaps", self.labels);
+            stops = self.tracker.newCounter("stream_receiver_total_stops", self.labels);
+            restarts = self.tracker.newCounter("stream_receiver_total_restarts", self.labels);
+            lastStopPos = self.tracker.newCounter("stream_receiver_last_stop_pos", self.labels);
+            lastRestartPos = self.tracker.newCounter("stream_receiver_last_restart_pos", self.labels);
+            timeSinceLastChunk = self.tracker.newGauge("stream_receiver_time_since_last_chunk", self.labels, []);
           };
         };
         case _ {};
@@ -226,7 +230,7 @@ module {
   /// ```motoko include=import
   /// // Example usage
   /// let tracker = SenderTracker.new([("role", "bob")]);
-  /// SenderTracker.init(tracker, sender, promTracker, renderer);
+  /// SenderTracker.init(tracker, sender, renderer);
   /// ```
   public module SenderTracker {
     /// The state of a sender tracker.
@@ -235,6 +239,8 @@ module {
     /// `pullValuesRef`: A reference to the pull-based values in the renderer.
     /// `labels`: Additional labels applied to all metrics.
     public type SenderTracker = {
+      tracker : Tracker.Tracker;
+      labels : [Label.Label];
 
       var metrics : ?{
         // on send
@@ -260,18 +266,19 @@ module {
       };
 
       var pullValuesRef : ?Nat;
-      labels : [Label.Label];
     };
 
     /// Creates a new `SenderTracker` instance.
     ///
+    /// `tracker`: The PromTracker instance where metrics will be registered.
     /// `labels`: Additional labels to be added to all metrics.
     ///
     /// Never traps.
-    public func new(labels : [Label.Label]) : SenderTracker = {
+    public func new(tracker : Tracker.Tracker, labels : [Label.Label]) : SenderTracker = {
+      tracker;
+      labels;
       var metrics = null;
       var pullValuesRef = null;
-      labels;
     };
 
     /// Initializes the tracker by connecting it to a sender and a PromTracker.
@@ -281,11 +288,10 @@ module {
     ///
     /// `self`: The tracker instance to initialize.
     /// `sender`: The stream sender to track.
-    /// `tracker`: The PromTracker instance where metrics will be registered.
     /// `renderer`: The Renderer instance for pull-based metrics.
     ///
     /// Never traps.
-    public func init(self : SenderTracker, sender : SenderInterface, tracker : Tracker.Tracker, renderer : PT.Renderer) {
+    public func init(self : SenderTracker, sender : SenderInterface, renderer : PT.Renderer) {
       sender.callbacks.onSend := func(c) { onSend(self, sender, c) };
       sender.callbacks.onNoSend := func() { onNoSend(self) };
       sender.callbacks.onError := func(e) { onError(self, e) };
@@ -296,25 +302,25 @@ module {
         case (null) {
           self.metrics := ?{
             // on send
-            busyLevel = tracker.newGauge("stream_sender_window_size", self.labels, []);
-            queueSizePreBatch = tracker.newGauge("stream_sender_queue_size_pre_batch", self.labels, []);
-            queueSizePostBatch = tracker.newGauge("stream_sender_queue_size_post_batch", self.labels, []);
-            chunkSize = tracker.newGauge("stream_sender_chunk_size", self.labels, Array.tabulate<Nat>(8, func(i) = 8 ** i));
-            pings = tracker.newCounter("stream_sender_total_pings", self.labels);
-            skips = tracker.newCounter("stream_sender_total_skips", self.labels);
+            busyLevel = self.tracker.newGauge("stream_sender_window_size", self.labels, []);
+            queueSizePreBatch = self.tracker.newGauge("stream_sender_queue_size_pre_batch", self.labels, []);
+            queueSizePostBatch = self.tracker.newGauge("stream_sender_queue_size_post_batch", self.labels, []);
+            chunkSize = self.tracker.newGauge("stream_sender_chunk_size", self.labels, Array.tabulate<Nat>(8, func(i) = 8 ** i));
+            pings = self.tracker.newCounter("stream_sender_total_pings", self.labels);
+            skips = self.tracker.newCounter("stream_sender_total_skips", self.labels);
 
             // on response
-            oks = tracker.newCounter("stream_sender_total_oks", self.labels);
-            gaps = tracker.newCounter("stream_sender_total_gaps", self.labels);
-            stops = tracker.newCounter("stream_sender_total_stops", self.labels);
-            errors = tracker.newCounter("stream_sender_total_errors", self.labels);
-            stopFlag = tracker.newGauge("stream_sender_stop_flag", self.labels, []);
-            pausedFlag = tracker.newGauge("stream_sender_paused_flag", self.labels, []);
-            lastStopPos = tracker.newCounter("stream_sender_last_stop_pos", self.labels);
-            lastRestartPos = tracker.newCounter("stream_sender_last_restart_pos", self.labels);
+            oks = self.tracker.newCounter("stream_sender_total_oks", self.labels);
+            gaps = self.tracker.newCounter("stream_sender_total_gaps", self.labels);
+            stops = self.tracker.newCounter("stream_sender_total_stops", self.labels);
+            errors = self.tracker.newCounter("stream_sender_total_errors", self.labels);
+            stopFlag = self.tracker.newGauge("stream_sender_stop_flag", self.labels, []);
+            pausedFlag = self.tracker.newGauge("stream_sender_paused_flag", self.labels, []);
+            lastStopPos = self.tracker.newCounter("stream_sender_last_stop_pos", self.labels);
+            lastRestartPos = self.tracker.newCounter("stream_sender_last_restart_pos", self.labels);
 
             // on error
-            chunkErrorType = tracker.newGauge("stream_sender_chunk_error_type", self.labels, [0, 1, 2, 3, 4, 5, 6]);
+            chunkErrorType = self.tracker.newGauge("stream_sender_chunk_error_type", self.labels, [0, 1, 2, 3, 4, 5, 6]);
           };
         };
         case _ {};
