@@ -52,11 +52,12 @@ persistent actor Sender {
   transient let renderer = Renderer();
   renderer.addCanisterLabel(Sender);
   renderer.addValue(pt.toValue());
-  // Expose the `/metrics` endpoint
-  include Http(renderer.renderExposition, "/metrics");
 
   let tracker = SenderTracker.new([]);
   tracker.init(sender, pt, renderer);
+
+  // Expose the `/metrics` endpoint
+  include Http(renderer.renderExposition, "/metrics");
 
   // Persist stream state and metrics across upgrades
   var streamData = sender.share();
