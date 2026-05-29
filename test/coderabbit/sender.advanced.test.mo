@@ -239,7 +239,7 @@ do {
   await* sender.sendChunk();
 
   assert responseCalled;
-  assert lastResponse == ? #ok;
+  assert lastResponse == ?#ok;
 };
 
 // Test callbacks: onRestart

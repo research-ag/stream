@@ -1,6 +1,9 @@
 [dependencies]
-core = "2.0.0"
-swb = "1.2.2"
+core = "2.5.0"
+swb = "1.2.3"
+stream = "../../"
+# Replace with:
+# stream = "0.0.7"
 
 [toolchain]
-moc = "1.1.0"
+moc = "1.8.2"

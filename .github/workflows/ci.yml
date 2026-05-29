@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  test:
+    name: Tests and Examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: latest
+      - uses: caffeinelabs/setup-mops@v1
+      - name: Install icp-cli
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/dfinity/icp-cli/releases/download/v0.1.0-beta.6/icp-cli-installer.sh | sh
+      - run: |
+          mops toolchain init
+          mops install
+      - run: mops test
+      - name: Run minimal example
+        working-directory: ./examples/minimal
+        run: |
+          icp network start -d
+          icp deploy
+          sh run.sh
+          icp network stop
+      - name: Run main example
+        working-directory: ./examples/main
+        run: |
+          icp network start -d
+          icp deploy
+          sh run.sh
+          icp network stop
+      - name: Run promtracker example
+        working-directory: ./examples/promtracker
+        run: |
+          icp network start -d
+          icp deploy
+          sh run.sh
+          icp network stop
+
+  fmt:
+    name: Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: latest
+      - name: Prettier Check
+        run: |
+          npm install prettier prettier-plugin-motoko --no-save
+          npx prettier --plugin prettier-plugin-motoko --check '**/*.{mo,json,md}'

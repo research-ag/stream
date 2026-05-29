@@ -1,10 +1,13 @@
-import Stream "../../../src/StreamSender";
-import Tracker "../../../src/Tracker";
 import Result "mo:core/Result";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Prim "mo:prim";
-import PT "mo:promtracker";
+
+import { Tracker; Renderer } "mo:promtracker";
+import Http "mo:promtracker/mixins/http";
+
+import Stream "mo:stream/StreamSender";
+import { SenderTracker } "mo:stream/StreamTracker";
 
 persistent actor Sender {
   // Read receiver canister id once from an environment variable.
@@ -45,20 +48,25 @@ persistent actor Sender {
   );
   sender.setKeepAlive(?(10 ** 11, Time.now));
 
-  transient let metrics = PT.PromTracker(PT.canisterLabel(Sender), 65);
-  transient let tracker = Tracker.Sender(metrics, "", true);
-  tracker.init(sender);
+  let pt = Tracker.new();
+  transient let renderer = Renderer();
+  renderer.addCanisterLabel(Sender);
+  renderer.addValue(pt.toValue());
+
+  let tracker = SenderTracker.new(pt, []);
+  tracker.init(sender, renderer);
+
+  // Expose the `/metrics` endpoint
+  include Http(renderer.renderExposition, "/metrics");
 
   // Persist stream state and metrics across upgrades
   var streamData = sender.share();
-  var ptData = metrics.share();
+
   system func postupgrade() {
     sender.unshare(streamData);
-    metrics.unshare(ptData);
   };
   system func preupgrade() {
     streamData := sender.share();
-    ptData := metrics.share();
   };
 
   public shared func add(text : Text) : async () {
@@ -69,8 +77,4 @@ persistent actor Sender {
     await* sender.sendChunk();
   };
 
-  // Expose the `/metrics` endpoint
-  public query func http_request(req : PT.HttpReq) : async PT.HttpResp {
-    metrics.http_request(req);
-  };
 };

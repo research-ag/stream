@@ -1,6 +1,6 @@
 import Error "mo:core/Error";
 import Principal "mo:core/Principal";
-import Stream "../../../src/StreamReceiver";
+import Stream "mo:stream/StreamReceiver";
 import Prim "mo:prim";
 
 persistent actor Bob {

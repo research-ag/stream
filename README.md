@@ -10,16 +10,16 @@ The messages in the stream are ordered and should be processed by `B` in that or
 This package provides an implementation of a protocol for this purpose.
 The protocol has the following properties:
 
-* efficiency: messages from `A` are sent in batches to `B`
-* order: preservation of order is guaranteed
-* no gaps: messages are retried if needed to make sure there are no gaps in the stream
+- efficiency: messages from `A` are sent in batches to `B`
+- order: preservation of order is guaranteed
+- no gaps: messages are retried if needed to make sure there are no gaps in the stream
 
 The package provides two classes, `StreamSender` for `A` and `StreamReceiver` for `B`.
 In `A`, the canister code pushes items one by one to the `StreamSender` class.
 In `B`, the `StreamReceiver` class invokes a callback for each arrived item.
-The two classes manage everything in between including batching, 
-retries if any inter-canister calls fail and 
-managing concurrency (pipelining). 
+The two classes manage everything in between including batching,
+retries if any inter-canister calls fail and
+managing concurrency (pipelining).
 
 From the outside the protocol provides ordered, reliable messaging similar to TCP.
 The implementation is simpler than TCP.
@@ -38,9 +38,9 @@ Examples are documented in [examples/README.md](examples/README.md).
 
 For updates, help, questions, feedback and other requests related to this package join us on:
 
-* [OpenChat group](https://oc.app/2zyqk-iqaaa-aaaar-anmra-cai)
-* [Twitter](https://twitter.com/mr_research_ag)
-* [Dfinity forum](https://forum.dfinity.org/)
+- [OpenChat group](https://oc.app/2zyqk-iqaaa-aaaar-anmra-cai)
+- [Twitter](https://twitter.com/mr_research_ag)
+- [Dfinity forum](https://forum.dfinity.org/)
 
 ## Motivation
 
@@ -50,9 +50,9 @@ by letting this library handle all of it.
 
 ## Interface
 
-### `StreamSender` 
+### `StreamSender`
 
-Before instantiating the class, the user needs to define a function `sendFunc` that makes an inter-canister call to the receiver and calls a corresponding receiving endpoint. 
+Before instantiating the class, the user needs to define a function `sendFunc` that makes an inter-canister call to the receiver and calls a corresponding receiving endpoint.
 This is boilerplate code and is usually a one-line function.
 Sender and receiver have to a agree on the name of the endpoint.
 
@@ -60,7 +60,7 @@ The `StreamSender` forms each batch by taking unsent items from its internal que
 The user has a way to control the batch size beyond simply defining a maximum number of item per batch.
 For example, the user may want to count the byte size of the items in a batch
 and limit the size of a batch by byte size.
-This will allow him to make better use of the total available message size in inter-canister communication. 
+This will allow him to make better use of the total available message size in inter-canister communication.
 
 To this end, the user provides a `counterCreator` function (typically a class constructor).
 The `StreamSender` uses it to create a new counter instance for each batch.
@@ -76,39 +76,51 @@ In other words, the type of the items in the queue can differ from the type of t
 `sendFunc` and `counterCreator` must be passed to the `StreamSender` constructor.
 
 The `StreamSender` has four more settings that can be set dynamically at runtime via setter functions.
-  * `maxQueueSize`: the maximum number of elements that can simultaneously be in `StreamSender`'s queue. Default setting is infinity.
-  * `maxWindowSize`: the maximum number of concurrent `sendChunk` calls. Default setting is 5.
-  * `keepAliveSeconds`: the period in seconds after which `StreamSender` should send a ping chunk in case there are no items to send. Default setting is not to ping.
-  * `maxStreamLength`: the maximum number of items a stream can ever accept. Default setting is infinity.  
+
+- `maxQueueSize`: the maximum number of elements that can simultaneously be in `StreamSender`'s queue. Default setting is infinity.
+- `maxWindowSize`: the maximum number of concurrent `sendChunk` calls. Default setting is 5.
+- `keepAliveSeconds`: the period in seconds after which `StreamSender` should send a ping chunk in case there are no items to send. Default setting is not to ping.
+- `maxStreamLength`: the maximum number of items a stream can ever accept. Default setting is infinity.
 
 Methods:
 
-* `push` is used to add item to the stream.
-* `status` to check current status of stream sender.
-* `sendChunk` to trigger sending a chunk to the receiver side.
-* additional helper functions are provided.
+- `push` is used to add item to the stream.
+- `status` to check current status of stream sender.
+- `sendChunk` to trigger sending a chunk to the receiver side.
+- additional helper functions are provided.
 
 `StreamReceiver` requires the following arguments in its constructor:
 
-* `itemCallback` is the function that will be called on each individual received item.
-* `timeoutArg` defines if the stream should be stopped if too much time passes between two consecutive `onChunk` calls. `null` means no timeout. Otherwise a duration and the time retrieval function are supplied.
+- `itemCallback` is the function that will be called on each individual received item.
+- `timeoutArg` defines if the stream should be stopped if too much time passes between two consecutive `onChunk` calls. `null` means no timeout. Otherwise a duration and the time retrieval function are supplied.
 
 The method `onChunk` of the `StreamReceiver` must be connected with an endpoint of the receiver canister.
 It must be called with each arriving chunk from the sender.
 
 ## Usage
 
+### Formatting
+
+To format the code, run:
+
+```sh
+npx -y prettier --plugin prettier-plugin-motoko --write '**/*.{mo,json,md}'
+```
+
 ### Install with mops
 
 You need `mops` installed. In your project directory run:
+
 ```sh
 mops add stream
 ```
 
 In the Motoko source file import the package as:
+
 ```motoko
 import StreamSender "mo:stream/StreamSender";
 import StreamReceiver "mo:stream/StreamReceiver";
+
 ```
 
 ### Example of sender
@@ -116,7 +128,7 @@ import StreamReceiver "mo:stream/StreamReceiver";
 This example is taken from `examples/minimal`.
 
 ```motoko
-import Stream "../../../src/StreamSender";
+import Stream "mo:stream/StreamSender";
 import Prim "mo:prim";
 
 persistent actor Alice {
@@ -194,7 +206,7 @@ This example is taken from `examples/minimal`.
 ```motoko
 import Error "mo:core/Error";
 import Principal "mo:core/Principal";
-import Stream "../../../src/StreamReceiver";
+import Stream "mo:stream/StreamReceiver";
 import Prim "mo:prim";
 
 persistent actor Bob {
@@ -241,6 +253,7 @@ persistent actor Bob {
   // A getter for the log to monitor the receiver in action
   public func log() : async Text { log_ };
 };
+
 ```
 
 ### Build & test
@@ -249,12 +262,14 @@ Install [node](https://nodejs.org/) (LTS recommended) including `npm`.
 Required for `mops`.
 
 Install `mops`:
+
 ```sh
 npm install -g ic-mops
 mops toolchain init
 ```
 
 Run
+
 ```sh
 git clone git@github.com:research-ag/stream.git
 mops install
@@ -274,17 +289,17 @@ Minimal code required to get a sender and a receiver talking to each other.
 
 Compared to the example above this demonstrates:
 
-* how a more sophisticated counter for batch preparation can look like
-* how queue type can differ from sending type
-* how to send chunks from heartbeat
-* how to persist the stream across canister upgrades
+- how a more sophisticated counter for batch preparation can look like
+- how queue type can differ from sending type
+- how to send chunks from heartbeat
+- how to persist the stream across canister upgrades
 
 #### Promtracker
 
 Compared to the main example this demonstrates:
 
-* how to use a Tracker connected to a stream
-* how to persist the metrics across canister upgrades
+- how to use a Tracker connected to a stream
+- how to persist the metrics across canister upgrades
 
 You can watch the metrics from a browser at a URL like this:
 http://txyno-ch777-77776-aaaaq-cai.raw.localhost:8000/metrics
@@ -305,6 +320,6 @@ Main author: Timo Hanke (timohanke).
 
 Contributors: Andrii Stepanov (AStepanov25), Andy Gura (AndyGura).
 
-## License 
+## License
 
 Apache-2.0

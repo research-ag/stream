@@ -1,11 +1,14 @@
-import Stream "../../../src/StreamReceiver";
-import Tracker "../../../src/Tracker";
 import Error "mo:core/Error";
 import Principal "mo:core/Principal";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Prim "mo:prim";
-import PT "mo:promtracker";
+
+import { Tracker; Renderer } "mo:promtracker";
+import Http "mo:promtracker/mixins/http";
+
+import Stream "mo:stream/StreamReceiver";
+import { ReceiverTracker } "mo:stream/StreamTracker";
 
 persistent actor Receiver {
   // Read sender principal once from an environment variable.
@@ -31,20 +34,25 @@ persistent actor Receiver {
     ?(10 ** 12, Time.now),
   );
 
-  transient let metrics = PT.PromTracker(PT.canisterLabel(Receiver), 65);
-  transient let tracker = Tracker.Receiver(metrics, "", true);
-  tracker.init(receiver);
+  let pt = Tracker.new();
+
+  transient let renderer = Renderer();
+  renderer.addCanisterLabel(Receiver);
+  renderer.addValue(pt.toValue());
+
+  let tracker = ReceiverTracker.new(pt, []);
+  tracker.init(receiver, renderer);
+
+  // Expose the `/metrics` endpoint
+  include Http(renderer.renderExposition, "/metrics");
 
   // Persist stream state and metrics across upgrades
   var streamData = receiver.share();
-  var ptData = metrics.share();
   system func preupgrade() {
     streamData := receiver.share();
-    ptData := metrics.share();
   };
   system func postupgrade() {
     receiver.unshare(streamData);
-    metrics.unshare(ptData);
   };
 
   public shared (msg) func receive(c : ChunkMessage) : async ControlMessage {
@@ -53,8 +61,4 @@ persistent actor Receiver {
     receiver.onChunk(c);
   };
 
-  // Expose the `/metrics` endpoint
-  public query func http_request(req : PT.HttpReq) : async PT.HttpResp {
-    metrics.http_request(req);
-  };
 };
