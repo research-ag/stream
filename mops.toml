@@ -12,7 +12,7 @@ swb = "2.0.1"
 promtracker = "1.0.1"
 
 [dev-dependencies]
-async-test = "0.0.5"
+async-test = "0.1.0"
 
 [requirements]
 moc = "2.0.0"
