@@ -72,7 +72,7 @@ do {
     await* sender.sendChunk();
     i += 1;
   };
-  Debug.print("sent " # Nat.toText(i) # " chunks");
+  Debug.print("sent " # i.toText() # " chunks");
   assert i != max;
 };
 

@@ -243,7 +243,7 @@ do {
     (100, #restart),
   ];
 
-  for (msg in messages.vals()) {
+  for (msg in messages.values()) {
     let info = Types.chunkMessageInfo(msg);
     assert info.0 == msg.0;
   };

@@ -6,7 +6,7 @@ import Types "../src/internal/types";
 
 // sender actor
 // argument r is the receiver's shared receive function
-persistent actor class A(
+actor class A(
   b : actor {
     receive(m : Types.ChunkMessage<?Text>) : async Types.ControlMessage;
   }
@@ -41,17 +41,17 @@ persistent actor class A(
   func sendToReceiver(m : ChunkMessage) : async* ControlMessage {
     let start = m.0;
     var end = m.0;
-    var str = "A send: (" # Nat.toText(m.0) # ", ";
+    var str = "A send: (" # m.0.toText() # ", ";
     switch (m.1) {
       case (#ping) str #= "ping";
       case (#chunk e) {
-        str #= "chunk [" # Nat.toText(e.size()) # "]";
+        str #= "chunk [" # e.size().toText() # "]";
         end := start + e.size();
       };
       case (#restart) str #= "restart";
     };
     Debug.print(str # ")");
-    str := "A recv: [" # Nat.toText(start) # "-" # Nat.toText(end) # ") ";
+    str := "A recv: [" # start.toText() # "-" # end.toText() # ") ";
     try {
       let ret = await b.receive(m);
       switch (ret) {
@@ -62,12 +62,12 @@ persistent actor class A(
       Debug.print(str);
       return ret;
     } catch (e) {
-      switch (Error.code(e)) {
+      switch (e.code()) {
         case (#canister_reject) str #= "reject(";
         case (#canister_error) str #= "trap(";
         case (_) str #= "other(";
       };
-      str #= "\"" # Error.message(e) # "\")";
+      str #= "\"" # e.message() # "\")";
       Debug.print(str);
       throw e;
     };
@@ -82,7 +82,7 @@ persistent actor class A(
     let res = sender.push(item);
     var str = "A submit: ";
     switch (res) {
-      case (#ok i) str #= Nat.toText(i);
+      case (#ok i) str #= i.toText();
       case (#err _) str #= "Error";
     };
     Debug.print(str);
@@ -93,7 +93,7 @@ persistent actor class A(
   public func trigger() : async () {
     let t_ = t;
     t += 1;
-    Debug.print("A trigger: " # Nat.toText(t_) # " ");
+    Debug.print("A trigger: " # t_.toText() # " ");
     await* sender.sendChunk();
     // Debug.print("A trigger: " # Nat.toText(t_) # " <-");
   };

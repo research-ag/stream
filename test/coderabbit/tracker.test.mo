@@ -16,7 +16,7 @@ type ChunkMessage = Types.ChunkMessage<?Text>;
 
 // Test Receiver tracker initialization and metrics
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   let metrics = Tracker.new();
@@ -37,7 +37,7 @@ do {
 
 // Test Receiver tracker with gap
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   let metrics = Tracker.new();
@@ -57,7 +57,7 @@ do {
 
 // Test Receiver tracker with stop
 do {
-  func process(index : Nat, item : Text) : Bool { false };
+  func process(_index : Nat, _item : Text) : Bool { false };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   let metrics = Tracker.new();
@@ -76,7 +76,7 @@ do {
 
 // Test Receiver tracker with restart
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   let metrics = Tracker.new();
@@ -96,7 +96,7 @@ do {
 
 // Test Receiver tracker dispose
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   let metrics = Tracker.new();
@@ -120,7 +120,7 @@ do {
 
 // Test Sender tracker initialization and metrics
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   let metrics = Tracker.new();
@@ -140,7 +140,7 @@ do {
 
 // Test Sender tracker with no send
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   let metrics = Tracker.new();
@@ -160,7 +160,7 @@ do {
 // Test Sender tracker with ping
 do {
   var time = 0;
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   sender.setKeepAlive(?(5, func() = time));
@@ -181,7 +181,7 @@ do {
 
 // Test Sender tracker with error
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage {
+  func send(_ch : ChunkMessage) : async* ControlMessage {
     throw Error.reject("test error");
   };
 
@@ -201,7 +201,7 @@ do {
 
 // Test Sender tracker with gap response
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #gap };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #gap };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   let metrics = Tracker.new();
@@ -220,7 +220,7 @@ do {
 
 // Test Sender tracker with stop response
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #stop 0 };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #stop 0 };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   let metrics = Tracker.new();
@@ -270,7 +270,7 @@ do {
 
 // Test Sender tracker dispose
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   let metrics = Tracker.new();
@@ -295,8 +295,8 @@ do {
 
 // Test multiple trackers with same PromTracker
 do {
-  func process(index : Nat, item : Text) : Bool { true };
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func process(_index : Nat, _item : Text) : Bool { true };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
@@ -321,7 +321,7 @@ do {
 
 // Test Receiver tracker with different label
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   let metrics = Tracker.new();
@@ -339,7 +339,7 @@ do {
 
 // Test Sender tracker with different label
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   let metrics = Tracker.new();

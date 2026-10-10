@@ -5,14 +5,14 @@ import Prim "mo:prim";
 
 import Stream "mo:stream/StreamReceiver";
 
-persistent actor Receiver {
+actor Receiver {
   // Read sender principal once from an environment variable.
   //
   // Note: We don't allow the sender to change later because that
   // would risk corrupting the stream state. We would create a new
   // stream instead if we have a new sender.
   let sender = Principal.fromText(
-    switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:sender")) {
+    switch (Prim.envVar("PUBLIC_CANISTER_ID:sender")) {
       case (?id) id;
       case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:sender' not set");
     }

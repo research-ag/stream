@@ -6,7 +6,7 @@ import Nat "mo:core/Nat";
 import Types "../src/internal/types";
 
 // receiver actor
-persistent actor class B() {
+actor class B() {
   // types for receiver actor
   type ChunkMessage = Types.ChunkMessage<?Text>;
   type ControlMessage = Types.ControlMessage;
@@ -14,7 +14,7 @@ persistent actor class B() {
   // processor of received items
   transient let received = List.empty<Text>();
   func processItem(i : Nat, item : ?Text) : Bool {
-    let prefix = ".   B   item " # Nat.toText(i) # ": ";
+    let prefix = ".   B   item " # i.toText() # ": ";
     switch (item) {
       case (null) Debug.print(prefix # "null");
       case (?x) {
@@ -36,11 +36,11 @@ persistent actor class B() {
   public func receive(m : ChunkMessage) : async ControlMessage {
     let start = m.0;
     var end = m.0;
-    var str = ".   B recv: (" # Nat.toText(m.0) # ", ";
+    var str = ".   B recv: (" # m.0.toText() # ", ";
     switch (m.1) {
       case (#ping) str #= "ping";
       case (#chunk e) {
-        str #= "chunk [" # Nat.toText(e.size()) # "]";
+        str #= "chunk [" # e.size().toText() # "]";
         end := start + e.size();
       };
       case (#restart) str #= "restart";
@@ -67,7 +67,7 @@ persistent actor class B() {
 
   // query the items processor
   public query func listReceived() : async [Text] {
-    List.toArray(received);
+    received.toArray();
   };
   public query func nReceived() : async Nat {
     received.size();

@@ -9,13 +9,13 @@ import Http "mo:promtracker/mixins/http";
 import Stream "mo:stream/StreamSender";
 import { SenderTracker } "mo:stream/StreamTracker";
 
-persistent actor Sender {
+actor Sender {
   // Read receiver canister id once from an environment variable.
   //
   // Note: We don't allow the receiver to change later because that
   // would risk corrupting the stream state. We would create a new
   // stream instead if we have a new receiver.
-  let receiverId : Text = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:receiver")) {
+  let receiverId : Text = switch (Prim.envVar("PUBLIC_CANISTER_ID:receiver")) {
     case (?id) id;
     case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:receiver' not set");
   };
