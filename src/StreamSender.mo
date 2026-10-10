@@ -29,7 +29,7 @@ module {
 
   /// Type of `StableData` for `share`/`unshare` function.
   public type StableData<T> = {
-    buffer : SWB.StableData<T>;
+    buffer : SWB.SlidingWindowBuffer<T>;
     stopped : Bool;
     head : Nat;
     lastChunkSent : Int;
@@ -59,7 +59,7 @@ module {
     counterCreator : () -> { accept(item : Q) : ?S },
   ) {
     /// Queue for storing items to be sent.
-    let buffer = SWB.SlidingWindowBuffer<Q>();
+    var buffer = SWB.empty<Q>();
 
     var stopped = false;
     var paused = false;
@@ -89,18 +89,20 @@ module {
       lastChunkSent_ := arg.1 ();
     };
 
-    /// Share data in order to store in stable varible. No validation is performed.
+    /// Share data in order to store in stable variable. No validation is performed.
+    /// The queue is shared by reference, not copied: it stays in sync with this `StreamSender`.
     public func share() : StableData<Q> = {
-      buffer = buffer.share();
+      buffer = buffer;
       stopped = stopped;
       head = head;
       lastChunkSent = lastChunkSent_;
       shutdown = shutdown or paused or concurrentChunks > 0;
     };
 
-    /// Unhare data in order to store in stable varible. No validation is performed.
+    /// Unshare data in order to restore from stable variable. No validation is performed.
+    /// The queue is taken over by reference, not copied.
     public func unshare(data : StableData<Q>) {
-      buffer.unshare(data.buffer);
+      buffer := data.buffer;
       stopped := data.stopped;
       head := data.head;
       lastChunkSent_ := data.lastChunkSent;
@@ -109,7 +111,7 @@ module {
 
     func queueFull() : Bool {
       let ?maxQueueSize = settings.maxQueueSize else return false;
-      buffer.len() >= maxQueueSize;
+      buffer.size() >= maxQueueSize;
     };
 
     func streamLengthExceeded() : Bool {
@@ -176,7 +178,7 @@ module {
         let counter = counterCreator();
         let vec = List.empty<S>();
         label fill loop {
-          let ?item = buffer.getOpt(end) else break fill;
+          let ?item = buffer.get(end) else break fill;
           let ?wrappedItem = counter.accept(item) else break fill;
           vec.add(wrappedItem);
           end += 1;
@@ -208,7 +210,7 @@ module {
         await* sendFunc((start, chunkPayload));
       } catch (e) {
         // shutdown on permanent system errors
-        switch (Error.code(e)) {
+        switch (e.code()) {
           case (#system_fatal or #destination_invalid or #future _ or #system_unknown) shutdown := true;
           case (#canister_error or #canister_reject) {};
           case (#system_transient or #call_error _) {};
@@ -301,7 +303,7 @@ module {
     /// This is the time period after which `StreamSender` sends a "ping chunk" in case there are no other items to send.
     /// See `setKeepAlive` for more details.
     /// A `null` value means the `StreamSender` does not ping.
-    public func keepAliveTime() : ?Nat = Option.map<(Nat, () -> Int), Nat>(settings.keepAlive, func(x) = x.0);
+    public func keepAliveTime() : ?Nat = settings.keepAlive.map<(Nat, () -> Int), Nat>(func(x) = x.0);
 
     /// Update max queue size.
     /// `maxQueueSize` is maximum number of elements, which can simultaneously be in `StreamSender`'s queue. Default value is infinity.
@@ -339,7 +341,7 @@ module {
     public func length() : Nat = buffer.end();
 
     /// Internal queue size
-    public func queueSize() : Nat = buffer.len();
+    public func queueSize() : Nat = buffer.size();
 
     /// Amount of items, which were sent to receiver.
     public func sent() : Nat = head;
@@ -348,7 +350,7 @@ module {
     public func received() : Nat = buffer.start();
 
     /// Get item from queue by index.
-    public func get(index : Nat) : ?Q = buffer.getOpt(index);
+    public func get(index : Nat) : ?Q = buffer.get(index);
 
     /// Returns flag is sender is ready.
     public func isReady() : Bool = status() == #ready;

@@ -1,13 +1,13 @@
 import Stream "mo:stream/StreamSender";
 import Prim "mo:prim";
 
-persistent actor Alice {
+actor Alice {
   // Read Bob's canister id once from an environment variable.
   //
   // Note: We don't allow the receiver to change later because that
   // would risk corrupting the stream state. We would create a new
   // stream instead if we have a new receiver.
-  let bob : Text = switch (Prim.envVar<system>("PUBLIC_CANISTER_ID:bob")) {
+  let bob : Text = switch (Prim.envVar("PUBLIC_CANISTER_ID:bob")) {
     case (?id) id;
     case _ Prim.trap("Environment variable 'PUBLIC_CANISTER_ID:bob' not set");
   };

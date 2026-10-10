@@ -33,7 +33,7 @@ func test_call(sequence : [Item]) : async* () {
     Result.assertOk(sender.push("a"));
   };
 
-  var result = VarArray.repeat<async ()>(async (), n);
+  let result = VarArray.repeat<async ()>(async (), n);
 
   for (i in Nat.range(0, n)) {
     result[i] := async await* sender.sendChunk();
@@ -42,7 +42,7 @@ func test_call(sequence : [Item]) : async* () {
     assert sender.status() == #ready and sender.received() == 0 and sender.sent() == i + 1;
   };
 
-  for (item in sequence.vals()) {
+  for (item in sequence.values()) {
     let (index, response, status, received, sent) = item;
     mock.release(index, response);
     await result[index];
@@ -68,14 +68,14 @@ func test_stage(sequence : [Item]) : async* () {
     Result.assertOk(sender.push("a"));
   };
 
-  let items = Array.sort<Item>(sequence, func(a, b) = Nat.compare(a.0, b.0));
+  let items = sequence.sort<Item>(func(a, b) = Nat.compare(a.0, b.0));
   var i = 0;
-  for (item in items.vals()) {
+  for (item in items.values()) {
     assert mock.stage(item.1) == i;
     i += 1;
   };
 
-  var result = VarArray.repeat<async ()>(async (), n);
+  let result = VarArray.repeat<async ()>(async (), n);
   for (i in Nat.range(0, n)) {
     result[i] := async await* sender.sendChunk();
     await* mock.wait(i, #called);
@@ -83,7 +83,7 @@ func test_stage(sequence : [Item]) : async* () {
     assert sender.status() == #ready and sender.received() == 0 and sender.sent() == i + 1;
   };
 
-  for (item in sequence.vals()) {
+  for (item in sequence.values()) {
     let (index, _, status, received, sent) = item;
     mock.release(index);
     await result[index];
@@ -105,7 +105,7 @@ do {
     (null, #ready, 0, 0),
     (?#stop 0, #stopped, 0, 0),
   ];
-  for (t in tests.vals()) {
+  for (t in tests.values()) {
     let (response, status, pos, sent) = t;
     await* test([(0, response, status, pos, sent)]);
   };
@@ -119,7 +119,7 @@ do {
     (null, #stopped, 0, 0),
     (?#stop 0, #shutdown, 1, 0),
   ];
-  for (t in tests.vals()) {
+  for (t in tests.values()) {
     let (response, status, pos, sent) = t;
     await* test([
       (0, ?#stop 0, #stopped, 0, 0),
@@ -151,7 +151,7 @@ do {
     ([?#stop 0, null], [(#stopped, 0, 0), (#stopped, 0, 0)]),
     ([?#stop 0, ?#stop 0], [(#stopped, 0, 0), (#shutdown, 1, 0)]),
   ];
-  for (t in tests.vals()) {
+  for (t in tests.values()) {
     let (responses, statuses) = t;
     await* test([
       (0, responses[0], statuses[0].0, statuses[0].1, statuses[0].2),
@@ -183,7 +183,7 @@ do {
     ([?#stop 0, null], [(#paused, 0, 1), (#stopped, 0, 0)]),
     ([?#stop 0, ?#stop 0], [(#stopped, 1, 1), (#shutdown, 1, 0)]),
   ];
-  for (t in tests.vals()) {
+  for (t in tests.values()) {
     let (responses, statuses) = t;
     await* test([
       (1, responses[1], statuses[0].0, statuses[0].1, statuses[0].2),
@@ -293,7 +293,7 @@ func allCases(n : Nat) : async () {
     s.setKeepAlive(?(1, func() = time));
     s.setWindowSize(n + 1);
 
-    var result = VarArray.repeat<async ()>(async (), n);
+    let result = VarArray.repeat<async ()>(async (), n);
 
     for (i in Nat.range(0, n)) {
       switch (responses[i].1) {
@@ -320,8 +320,8 @@ func allCases(n : Nat) : async () {
     for (i in Nat.range(0, 2 ** n)) {
       for (j in Nat.range(0, 2 ** n)) {
         for (time in Nat.range(0, n)) {
-          let a = Nat32.fromNat(i);
-          let b = Nat32.fromNat(j);
+          let a = i.toNat32();
+          let b = j.toNat32();
           let (r, l) = getResponses(a, b, time);
           if (not (await test(p, r, l))) {
             Debug.print(debug_show (p, i, j, time, r));
@@ -345,7 +345,7 @@ type ItemA = ({ #send; #release : (Nat, ?StreamSender.ControlMessage) }, StreamS
 // The caller must ensure the sequence is correct.
 // All chunks that get sent must be released or the test won't terminate.
 func _test_arbitrary(sequence : [ItemA]) : async () {
-  let n = Iter.size(Iter.filter(sequence.vals(), func(a : ItemA) : Bool = a.0 == #send));
+  let n = sequence.values().filter(func(a : ItemA) : Bool = a.0 == #send).size();
 
   let mock = AsyncMethodTester.ReleaseTester<StreamSender.ControlMessage>(DEBUG, "send", null);
 
@@ -362,9 +362,9 @@ func _test_arbitrary(sequence : [ItemA]) : async () {
     Result.assertOk(sender.push("a"));
   };
 
-  var result = VarArray.repeat<async ()>(async (), n);
+  let result = VarArray.repeat<async ()>(async (), n);
   var i = 0;
-  for (item in sequence.vals()) {
+  for (item in sequence.values()) {
     let (command, status, received, sent) = item;
     switch (command) {
       case (#send) {
@@ -400,7 +400,7 @@ do {
     Result.assertOk(sender.push("a"));
   };
 
-  var result = VarArray.repeat<async ()>(async (), N);
+  let result = VarArray.repeat<async ()>(async (), N);
 
   for (i in Nat.range(0, N - 1)) {
     result[i] := async await* sender.sendChunk();
@@ -435,7 +435,7 @@ do {
   var time = 0;
   sender.setKeepAlive(?(1, func() = time));
 
-  var result = VarArray.repeat<async ()>(async (), n);
+  let result = VarArray.repeat<async ()>(async (), n);
 
   time := 2;
   result[0] := async await* sender.sendChunk();

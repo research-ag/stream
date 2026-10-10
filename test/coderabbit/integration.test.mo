@@ -15,7 +15,7 @@ do {
 
   // Receiver setup
   let received = List.empty<?Text>();
-  func processItem(i : Nat, item : ?Text) : Bool {
+  func processItem(_i : Nat, item : ?Text) : Bool {
     received.add(item);
     true;
   };
@@ -59,7 +59,7 @@ do {
   assert iterations < maxIterations;
   assert receiver.length() == 4;
 
-  let receivedArr = List.toArray(received);
+  let receivedArr = received.toArray();
   assert receivedArr[0] == ?"short";
   assert receivedArr[1] == null; // Long text wrapped to null
   assert receivedArr[2] == ?"mid";
@@ -72,7 +72,7 @@ do {
   let TIMEOUT = 100;
 
   let received = List.empty<?Text>();
-  func processItem(i : Nat, item : ?Text) : Bool {
+  func processItem(_i : Nat, item : ?Text) : Bool {
     received.add(item);
     true;
   };
@@ -118,7 +118,7 @@ do {
 // Integration test: multiple concurrent chunks
 do {
   let received = List.empty<?Text>();
-  func processItem(i : Nat, item : ?Text) : Bool {
+  func processItem(_i : Nat, item : ?Text) : Bool {
     received.add(item);
     true;
   };
@@ -141,7 +141,7 @@ do {
 
   // Push items
   for (i in Nat.range(0, 5)) {
-    Result.assertOk(sender.push("item" # Nat.toText(i)));
+    Result.assertOk(sender.push("item" # i.toText()));
   };
 
   // Send multiple chunks concurrently

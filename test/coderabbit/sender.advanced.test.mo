@@ -1,8 +1,6 @@
 import StreamSender "../../src/StreamSender";
-import StreamReceiver "../../src/StreamReceiver";
 import Result "mo:core/Result";
 import Debug "mo:core/Debug";
-import Nat "mo:core/Nat";
 import Error "mo:core/Error";
 import Types "../../src/internal/types";
 import Base "../sender.base";
@@ -12,7 +10,7 @@ type ChunkMessage = Types.ChunkMessage<?Text>;
 
 // Test maxQueueSize setting
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
 
@@ -31,7 +29,7 @@ do {
 
 // Test maxStreamLength setting
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
 
@@ -53,7 +51,7 @@ do {
 // Test windowSize setting
 do {
   var callCount = 0;
-  func send(ch : ChunkMessage) : async* ControlMessage {
+  func send(_ch : ChunkMessage) : async* ControlMessage {
     callCount += 1;
     #ok;
   };
@@ -104,7 +102,7 @@ do {
 
 // Test share/unshare functionality
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender1 = StreamSender.StreamSender<Text, ?Text>(send, Base.create(1));
   Result.assertOk(sender1.push("a"));
@@ -125,7 +123,7 @@ do {
 
 // Test status transitions
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(1));
 
@@ -139,7 +137,7 @@ do {
 
 // Test shutdown on #gap response
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #gap };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #gap };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   Result.assertOk(sender.push("a"));
@@ -152,7 +150,7 @@ do {
 
 // Test stopped status
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #stop 0 };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #stop 0 };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   Result.assertOk(sender.push("a"));
@@ -165,7 +163,7 @@ do {
 
 // Test partial stop
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #stop 1 };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #stop 1 };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   Result.assertOk(sender.push("a"));
@@ -183,7 +181,7 @@ do {
   var sendCallbackCalled = false;
   var chunkSizeReceived = 0;
 
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
 
@@ -207,7 +205,7 @@ do {
 do {
   var noSendCalled = false;
 
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
 
@@ -226,7 +224,7 @@ do {
   var responseCalled = false;
   var lastResponse : ?(ControlMessage or { #error }) = null;
 
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
 
@@ -276,7 +274,7 @@ do {
   var errorCalled = false;
   var errorCode : ?Error.ErrorCode = null;
 
-  func send(ch : ChunkMessage) : async* ControlMessage {
+  func send(_ch : ChunkMessage) : async* ControlMessage {
     throw Error.reject("test error");
   };
 
@@ -284,7 +282,7 @@ do {
 
   sender.callbacks.onError := func(err) {
     errorCalled := true;
-    errorCode := ?Error.code(err);
+    errorCode := ?err.code();
   };
 
   Result.assertOk(sender.push("a"));
@@ -295,7 +293,7 @@ do {
 
 // Test get() function
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
 
@@ -311,7 +309,7 @@ do {
 
 // Test sent() vs received() vs length()
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(2));
 
@@ -338,7 +336,7 @@ do {
 
 // Test throw behavior on different states
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #stop 0 };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #stop 0 };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   Result.assertOk(sender.push("a"));
@@ -350,7 +348,7 @@ do {
   let threw = try {
     await* sender.sendChunk();
     false;
-  } catch (e) {
+  } catch (_e) {
     true;
   };
   assert threw;
@@ -358,7 +356,7 @@ do {
 
 // Test busyLevel() function
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(1));
   sender.setWindowSize(3);
@@ -374,7 +372,7 @@ do {
 
 // Test queue rotation after receiving acknowledgment
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(2));
 
@@ -392,7 +390,7 @@ do {
 
 // Test restart() function returns false on shutdown
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #gap };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #gap };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   Result.assertOk(sender.push("a"));
@@ -429,7 +427,7 @@ do {
 // Test empty queue behavior
 do {
   var sendCalled = false;
-  func send(ch : ChunkMessage) : async* ControlMessage {
+  func send(_ch : ChunkMessage) : async* ControlMessage {
     sendCalled := true;
     #ok;
   };
@@ -470,7 +468,7 @@ do {
 // Test lastChunkSent() function
 do {
   var time = 0;
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   let sender = StreamSender.StreamSender<Text, ?Text>(send, Base.create(10));
   sender.setKeepAlive(?(5, func() = time));

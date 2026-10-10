@@ -10,7 +10,7 @@ import Base "sender.base";
 // sequential successful sends, chunk length = 1
 do {
   let N = 26;
-  let array = Array.tabulate<Text>(N, func(i) = "ab" # Char.toText(Char.fromNat32(Nat32.fromNat(i))));
+  let array = Array.tabulate<Text>(N, func(i) = "ab" # i.toNat32().toChar().toText());
 
   var i = 0;
   func send(message : Types.ChunkMessage<?Text>) : async* Types.ControlMessage {
@@ -38,7 +38,7 @@ do {
 // sequential successful sends, chunk length = 2
 do {
   let N = 26;
-  let array = Array.tabulate<Text>(N, func(i) = "ab" # Char.toText(Char.fromNat32(Nat32.fromNat(i))));
+  let array = Array.tabulate<Text>(N, func(i) = "ab" # i.toNat32().toChar().toText());
 
   var i = 0;
 

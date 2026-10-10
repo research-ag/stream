@@ -4,8 +4,9 @@
 
 ### Changed
 
-- Updated `core` from `2.0.0` to `2.5.0`.
-- Updated `swb` from `1.2.2` to `1.2.3`.
+- Require moc 2.0.0.
+- Updated `core` from `2.0.0` to `2.6.2`.
+- Updated `swb` from `1.2.2` to `2.0.1`. **Breaking:** `StreamSender.StableData.buffer` is now swb's directly stable `SlidingWindowBuffer` record instead of swb's `StableData` snapshot, so persisted sender state needs a migration. `share()`/`unshare()` now hand the queue over by reference instead of copying it.
 - Updated `promtracker` to `1.0.1` and adapted to its new API.
 - Renamed `Tracker` to `StreamTracker` to not confuse with promtracker's `Tracker`
 - Converted `StreamTracker` API from class-based to static module (record type). `SenderTracker` and `ReceiverTracker` are now directly stable.

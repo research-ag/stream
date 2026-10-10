@@ -131,7 +131,7 @@ This example is taken from `examples/minimal`.
 import Stream "mo:stream/StreamSender";
 import Prim "mo:prim";
 
-persistent actor Alice {
+actor Alice {
   // Read Bob's canister id once from an environment variable.
   //
   // Note: We don't allow the receiver to change later because that
@@ -209,7 +209,7 @@ import Principal "mo:core/Principal";
 import Stream "mo:stream/StreamReceiver";
 import Prim "mo:prim";
 
-persistent actor Bob {
+actor Bob {
   // Read Alice's principal once from an environment variable.
   //
   // Note: We don't allow the sender to change later because that

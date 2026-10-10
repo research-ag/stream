@@ -6,7 +6,7 @@ import Nat "mo:core/Nat";
 do {
   var size = 0;
   var itemsProcessed = 0;
-  func process(index : Nat, item : Text) : Bool {
+  func process(index : Nat, _item : Text) : Bool {
     itemsProcessed += 1;
     size += 1;
     size == index + 1;
@@ -34,7 +34,7 @@ do {
 // Test receiver that rejects items via itemCallback
 do {
   var acceptCount = 3;
-  func process(index : Nat, item : Text) : Bool {
+  func process(_index : Nat, _item : Text) : Bool {
     if (acceptCount > 0) {
       acceptCount -= 1;
       true;
@@ -53,7 +53,7 @@ do {
 // Test share/unshare functionality
 do {
   var size = 0;
-  func process(index : Nat, item : Text) : Bool {
+  func process(_index : Nat, _item : Text) : Bool {
     size += 1;
     true;
   };
@@ -78,7 +78,7 @@ do {
 
 // Test stop() function
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   assert not receiver.isStopped();
@@ -93,7 +93,7 @@ do {
 // Test ping handling
 do {
   var itemsProcessed = 0;
-  func process(index : Nat, item : Text) : Bool {
+  func process(_index : Nat, _item : Text) : Bool {
     itemsProcessed += 1;
     true;
   };
@@ -118,7 +118,7 @@ do {
 // Test restart message
 do {
   var time = 0;
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, ?(10, func() = time));
 
@@ -141,7 +141,7 @@ do {
 // Test timeout with multiple chunks and pings
 do {
   var time = 0;
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, ?(5, func() = time));
 
@@ -163,7 +163,7 @@ do {
 
 // Test gap with wrong start position (too high)
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
 
@@ -175,7 +175,7 @@ do {
 
 // Test gap with wrong start position (too low)
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
 
@@ -193,7 +193,7 @@ do {
   var lastInfo : ?(Nat, { #chunk : Nat; #ping; #restart }) = null;
   var lastResponse : ?StreamReceiver.ControlMessage = null;
 
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
 
@@ -224,7 +224,7 @@ do {
 // Test edge case: empty chunk
 do {
   var itemsProcessed = 0;
-  func process(index : Nat, item : Text) : Bool {
+  func process(_index : Nat, _item : Text) : Bool {
     itemsProcessed += 1;
     true;
   };
@@ -243,7 +243,7 @@ do {
 
 // Test maxLength with exact boundary
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   receiver.setMaxLength(?3);
@@ -259,7 +259,7 @@ do {
 // Test timeout at exact boundary
 do {
   var time = 0;
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, _item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, ?(10, func() = time));
 

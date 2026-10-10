@@ -11,7 +11,7 @@ type ControlMessage = Types.ControlMessage;
 // Edge case: zero-length chunks
 do {
   var itemsProcessed = 0;
-  func process(index : Nat, item : Text) : Bool {
+  func process(_index : Nat, _item : Text) : Bool {
     itemsProcessed += 1;
     true;
   };
@@ -29,7 +29,7 @@ do {
 // Edge case: alternating empty and non-empty chunks
 do {
   var itemsProcessed = 0;
-  func process(index : Nat, item : Text) : Bool {
+  func process(_index : Nat, _item : Text) : Bool {
     itemsProcessed += 1;
     true;
   };
@@ -46,7 +46,7 @@ do {
 
 // Edge case: sender with maxQueueSize = 0 (effectively no queue)
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   func counter() : { accept(item : Text) : ??Text } {
     {
@@ -65,7 +65,7 @@ do {
 
 // Edge case: sender with maxStreamLength = 0
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   func counter() : { accept(item : Text) : ??Text } {
     {
@@ -85,7 +85,7 @@ do {
 // Edge case: windowSize = 1 (minimum concurrency)
 do {
   var sendCount = 0;
-  func send(ch : ChunkMessage) : async* ControlMessage {
+  func send(_ch : ChunkMessage) : async* ControlMessage {
     sendCount += 1;
     #ok;
   };
@@ -110,21 +110,21 @@ do {
   // assert sender.status() == #busy;
 
   // Cannot send another chunk until first returns
-  let threw = try {
+  let _threw = try {
     await* sender.sendChunk();
     false;
-  } catch (e) {
+  } catch (_) {
     true;
   };
   // Disabled because concurrency cannot be tested like this.
   // It requires advanced setup using the async-test package.
-  // assert threw;
+  // assert _threw;
 };
 
 // Edge case: receiver with timeout = 0 (immediate timeout)
 do {
   var time = 1;
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, ?(0, func() = time));
 
@@ -139,7 +139,7 @@ do {
 
 // Edge case: counter that accepts nothing
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   func counter() : { accept(item : Text) : ??Text } {
     {
@@ -159,7 +159,7 @@ do {
 
 // Edge case: very large stop value
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
 
@@ -176,7 +176,7 @@ do {
 
 // Edge case: restart at position 0
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
 
@@ -188,7 +188,7 @@ do {
 // Edge case: restart after already stopped
 do {
   var time = 0;
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, ?(5, func() = time));
 
@@ -205,7 +205,7 @@ do {
 
 // Edge case: maxLength exactly equals chunk size
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
   receiver.setMaxLength(?5);
@@ -221,7 +221,7 @@ do {
 // Edge case: negative time values (edge of Int type)
 do {
   var time : Int = -100;
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(
     process,
@@ -239,7 +239,7 @@ do {
 
 // Edge case: share/unshare with stopped receiver
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, item : Text) : Bool { true };
 
   let receiver1 = StreamReceiver.StreamReceiver<Text>(process, null);
   receiver1.stop();
@@ -254,7 +254,7 @@ do {
 
 // Edge case: share/unshare sender with items in queue
 do {
-  func send(ch : ChunkMessage) : async* ControlMessage { #ok };
+  func send(_ch : ChunkMessage) : async* ControlMessage { #ok };
 
   func counter() : { accept(item : Text) : ??Text } {
     {
@@ -281,7 +281,7 @@ do {
 // Edge case: concurrent sends with errors
 do {
   var shouldError = true;
-  func send(ch : ChunkMessage) : async* ControlMessage {
+  func send(_ch : ChunkMessage) : async* ControlMessage {
     if (shouldError) {
       throw Error.reject("test error");
     } else {
@@ -315,7 +315,7 @@ do {
 
 // Edge case: callback returns false on first item
 do {
-  func process(index : Nat, item : Text) : Bool { false };
+  func process(_index : Nat, item : Text) : Bool { false };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
 
@@ -325,7 +325,7 @@ do {
 
 // Edge case: very large position values
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
 
@@ -335,7 +335,7 @@ do {
 
 // Edge case: restart multiple times
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
 
@@ -347,7 +347,7 @@ do {
 
 // Edge case: ping at non-current position
 do {
-  func process(index : Nat, item : Text) : Bool { true };
+  func process(_index : Nat, item : Text) : Bool { true };
 
   let receiver = StreamReceiver.StreamReceiver<Text>(process, null);
 

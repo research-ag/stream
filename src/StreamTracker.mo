@@ -404,7 +404,7 @@ module {
 
     func onError(self : SenderTracker, e : Error.Error) {
       let ?m = self.metrics else return;
-      let rejectCode = switch (Error.code(e)) {
+      let rejectCode = switch (e.code()) {
         case (#call_error _) 0;
         case (#system_fatal) 1;
         case (#system_transient) 2;
